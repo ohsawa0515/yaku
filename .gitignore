@@ -216,3 +216,13 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+
+.convert/*
+models/*
+*.sqlite3
+CLAUDE.md
+check_placeholders*.py
+check_vocab*.py
+eval_*.py
+jt*.py
