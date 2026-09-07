@@ -1,0 +1,45 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "yaku"
+description = "Offline translator for command output that keeps identifiers intact"
+readme = "README.md"
+requires-python = ">=3.12"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Shuichi Ohsawa" }]
+keywords = ["translation", "cli", "offline", "nmt"]
+classifiers = [
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Utilities",
+]
+# Rule files are TOML: tomllib is in the standard library, and its literal
+# strings hold regular expressions without escaping.
+dependencies = [
+    "ctranslate2>=4.0",
+    "sentencepiece>=0.2",
+]
+dynamic = ["version"]
+
+[project.urls]
+Homepage = "https://github.com/ohsawa0515/yaku"
+Issues = "https://github.com/ohsawa0515/yaku/issues"
+
+[project.scripts]
+yaku = "yaku.cli:main"
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[tool.hatch.version]
+path = "src/yaku/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/yaku"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
