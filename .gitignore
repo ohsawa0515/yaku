@@ -222,8 +222,3 @@ __marimo__/
 .venv/
 models/
 *.sqlite3
-CLAUDE.md
-check_placeholders*.py
-check_vocab*.py
-eval_*.py
-jt*.py
