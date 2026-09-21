@@ -30,6 +30,8 @@ class SourceProfile:
     """Everything that depends on the language being translated from."""
 
     lang: str
+    letter: re.Pattern[str]
+    word: re.Pattern[str]
     min_alpha_ratio: float
     min_words: int
     sentence_end: re.Pattern[str]
