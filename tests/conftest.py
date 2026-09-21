@@ -33,5 +33,5 @@ def japanese() -> TargetProfile:
         already_translated=re.compile(r"[\u3040-\u30ff\u4e00-\u9fff]"),
         quote_chars="\"'`",
         placeholder_fmt="T%d",
-        placeholder_pattern=re.compile(r"\bT\d{1,3}\b"),
+        placeholder_pattern=re.compile(r"\bT(\d{1,3})\b", re.IGNORECASE),
     )
