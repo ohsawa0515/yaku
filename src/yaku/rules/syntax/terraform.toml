@@ -1,0 +1,35 @@
+[[rule]]
+name    = "TFADDR"
+order   = 50
+pattern = '\b(?:module|data|resource|var|local)\.[\w\-\.\[\]"]+'
+
+[[rule]]
+name    = "RESOURCE"
+order   = 70
+pattern = '\b[a-z][a-z0-9]*_[a-z0-9_]+(?:\.[A-Za-z0-9_\-\.\[\]"]+)+'
+
+[[passthrough]]
+name    = "diff-line"
+pattern = '^\s*[~+\-]\s'
+
+[[passthrough]]
+name    = "known-after-apply"
+pattern = '^\s*#\s*\('
+
+[[passthrough]]
+name    = "destroy-marker"
+pattern = '^\s*<=\s'
+
+# Requires a resource address prefix. Bare verbs such as "Reading" and
+# "Creating" occur in ordinary documentation prose.
+[[passthrough]]
+name    = "progress"
+pattern = '^\s*\S+\.\S+:\s*(?:Refreshing state|Reading|Read|Creating|Created|Modifying|Modifications|Destroying|Destruction|Still |Provisioning|Preparing|Importing|Refresh)'
+
+[[passthrough]]
+name    = "id-attribute"
+pattern = '\[id='
+
+[[passthrough]]
+name    = "state-lock"
+pattern = '^\s*(?:Acquiring|Releasing) state lock'

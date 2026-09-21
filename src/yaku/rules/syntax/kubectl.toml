@@ -1,0 +1,11 @@
+[[passthrough]]
+name    = "section-heading"
+pattern = '^\s*\w+:\s*$'
+
+[[passthrough]]
+name    = "wide-table-row"
+pattern = '^\s{2,}\S+\s{2,}\S+\s{2,}\S'
+
+[[passthrough]]
+name    = "event-row"
+pattern = '^\s*(?:Normal|Warning)\s+\w+\s+\d'

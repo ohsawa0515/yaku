@@ -1,0 +1,124 @@
+# Tool-independent shell and configuration syntax.
+# The order value decides evaluation order across every file that is loaded.
+
+[[rule]]
+name    = "BRACKET"
+order   = 10
+pattern = '\[[^\[\]\n]{4,300}\]'
+
+[[rule]]
+name    = "URL"
+order   = 20
+pattern = '''https?://[^\s\)\]"'>]+'''
+
+[[rule]]
+name    = "ARN"
+order   = 30
+pattern = 'arn:aws:[\w:/\-]+'
+
+[[rule]]
+name    = "UUID"
+order   = 40
+pattern = '\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b'
+
+[[rule]]
+name    = "DOTQUOTED"
+order   = 60
+pattern = '"[^"\n]{1,60}"(?:\."[^"\n]{1,60}")+'
+
+[[rule]]
+name    = "ABSPATH"
+order   = 80
+pattern = '(?:/[\w.\-]+){2,}/?'
+
+[[rule]]
+name    = "RELPATH"
+order   = 90
+pattern = '(?:\./)?(?:[\w.\-]+/)+[\w.\-]+\.\w{1,6}\b'
+
+[[rule]]
+name    = "FILE"
+order   = 100
+pattern = '\b[\w\-]+\.(?:tf|tfvars|tfstate|yml|yaml|json|toml|ini|go|py|rb|rs|ts|js|conf|cfg|log|sh|sql|md)\b'
+
+[[rule]]
+name    = "HOSTPORT"
+order   = 110
+pattern = '\b\d{1,3}(?:\.\d{1,3}){3}(?::\d+)?\b'
+
+[[rule]]
+name    = "HOST"
+order   = 120
+pattern = '\b(?:[a-z0-9](?:[a-z0-9\-]*[a-z0-9])?\.)+(?:com|org|net|io|dev|jp|cloud|local|internal)\b'
+
+[[rule]]
+name    = "FLAG"
+order   = 130
+pattern = '(?<![\w\-])--?[a-zA-Z][\w\-]*'
+
+[[rule]]
+name    = "HASH"
+order   = 140
+pattern = '\b[0-9a-f]{7,40}\b'
+
+[[rule]]
+name    = "ENVVAR"
+order   = 150
+pattern = '\b[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+\b'
+
+[[rule]]
+name    = "CONST"
+order   = 160
+pattern = '''(?<![\w"'])[A-Z]{3,}(?![\w])'''
+
+[[rule]]
+name    = "QUOTED"
+order   = 180
+pattern = '''["'`][^"'`\n]{1,60}["'`]'''
+
+[[rule]]
+name    = "CFGKEY"
+order   = 190
+pattern = '\b[a-z][a-z0-9]{2,}:!?[a-z][\w\-]*(?:\s*=\s*\w+)?'
+
+[[rule]]
+name    = "IDENT"
+order   = 200
+pattern = '\b[a-z0-9]+(?:-[a-z0-9]+){2,}\b'
+
+[[rule]]
+name    = "COMPARE"
+order   = 210
+pattern = '[<>]=?\s?\w+'
+
+# Masking version numbers damages constraint syntax such as foo>=1.2.0, and
+# the decoder reproduces bare digits correctly without help.
+[[rule]]
+name    = "VERSION"
+order   = 220
+enabled = false
+pattern = '\bv?\d+\.\d+(?:\.\d+)?(?:[\-+][\w\.]+)?\b'
+
+[[passthrough]]
+name    = "blank-line"
+pattern = '^\s*$'
+
+[[passthrough]]
+name    = "symbols-only"
+pattern = '^[\s\W_]*$'
+
+[[passthrough]]
+name    = "bare-bracket"
+pattern = '^\s*[\[\{\}\]]\s*,?\s*$'
+
+[[passthrough]]
+name    = "key-value"
+pattern = '^\s*[\w\.\-]+\s*=\s*'
+
+[[passthrough]]
+name    = "json-key"
+pattern = '^\s*"[\w\.\-]+"\s*:\s*'
+
+[[passthrough]]
+name    = "stack-frame"
+pattern = '^\s*(?:at |from |File ")'

@@ -1,0 +1,8 @@
+lang              = "en"
+letter            = '[A-Za-z]'
+word              = '[A-Za-z]{2,}'
+min_alpha_ratio   = 0.45
+min_words         = 3
+sentence_end      = '[.:;!?]\s*$'
+sentence_split    = '(?<![A-Z]\.)(?<!\be\.g\.)(?<!\bi\.e\.)(?<!\bvs\.)(?<!\betc\.)(?<=[.!?])\s{1,3}(?=[A-Z(])'
+max_segment_chars = 220
