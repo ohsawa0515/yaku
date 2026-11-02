@@ -24,10 +24,25 @@ afterwards. No network access, no API keys, no data leaving the machine.
 
 ```console
 uv tool install yaku      # or: pipx install yaku
-yaku setup --lang ja      # downloads the 62 MB model
 ```
 
-The model is not bundled. `yaku --show-paths` prints where it goes.
+The model is not bundled, because FuguMT is CC BY-SA 4.0. Convert it once:
+
+```console
+uv venv .convert && source .convert/bin/activate
+uv pip install 'transformers<5' torch ctranslate2 sentencepiece
+ct2-transformers-converter --model staka/fugumt-en-ja \
+    --output_dir "$(yaku --show-paths | awk '/^models/{print $2}')/fugumt-en-ja" \
+    --quantization int8 --copy_files source.spm target.spm
+deactivate && rm -rf .convert
+```
+
+Without `--copy_files` the tokeniser files are left out and yaku will not
+start. Do not install `sacremoses`: its normalisation disagrees with reading
+the `.spm` files directly.
+
+`yaku --show-paths` prints every location yaku uses. A `models/` directory in
+the working directory takes precedence, which is how a checkout is tested.
 
 ## Use
 
@@ -97,7 +112,7 @@ original text rather than silently replaced.
 `--lang` switches the model and the measured constants together, so a new
 language needs a profile, not just a model.
 
-1. Pick a CTranslate2-compatible model and convert it.
+1. Pick a CTranslate2-compatible model (Marian and OPUS-MT convert cleanly).
 2. `uv run tools/check_placeholders.py` to choose a placeholder format.
 3. `uv run tools/eval_translate.py` to measure the length ratio bounds.
 4. Write `src/yaku/rules/target/<lang>.toml`.
