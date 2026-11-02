@@ -84,3 +84,22 @@ def test_standalone_hash_is_still_masked(mask_rules, japanese):
     masker = Masker(rules=mask_rules, target=japanese)
     _, values = masker.mask("Commit 9f8b6c5a1d2e3f4 was reverted.")
     assert "9f8b6c5a1d2e3f4" in values
+
+
+def test_terraform_diagnostic_lines_pass_through(passthrough):
+    for line in [
+        "  15:   content  = local.missing_value",
+        "   6: variable \"env\" {",
+        "    ├────────────────",
+        "    │ var.env is \"qa\"",
+    ]:
+        assert is_passthrough(line, passthrough), line
+
+
+def test_diagnostic_rules_ignore_manual_prose(passthrough):
+    for line in [
+        "     1.   The first argument is the archive name.",
+        "     Step 2: extract the files into the current directory.",
+        "     Version 3 of the format adds support for long names.",
+    ]:
+        assert not is_passthrough(line, passthrough), line

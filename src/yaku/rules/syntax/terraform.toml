@@ -33,3 +33,14 @@ pattern = '\[id='
 [[passthrough]]
 name    = "state-lock"
 pattern = '^\s*(?:Acquiring|Releasing) state lock'
+
+# Source excerpt inside a diagnostic: "  15:   content = local.x". The
+# indentation and the line number together keep this off numbered prose.
+[[passthrough]]
+name    = "diagnostic-source"
+pattern = '^\s{2,}\d+:\s+\S'
+
+# Box-drawing characters frame the expression values in a diagnostic.
+[[passthrough]]
+name    = "diagnostic-frame"
+pattern = '^\s*[│├╵╷]'
