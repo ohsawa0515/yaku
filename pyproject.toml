@@ -30,7 +30,7 @@ Homepage = "https://github.com/ohsawa0515/yaku"
 Issues = "https://github.com/ohsawa0515/yaku/issues"
 
 [project.scripts]
-yaku = "yaku.cli:main"
+yaku = "yaku.cli:run"
 
 [dependency-groups]
 dev = ["pytest>=8"]
