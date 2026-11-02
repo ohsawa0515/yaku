@@ -117,6 +117,7 @@ language needs a profile, not just a model.
 ```console
 uv sync
 uv run pytest
+uv run ruff check src tests tools && uv run ruff format src tests tools
 uv run tools/measure_wrap.py samples/*.txt
 uv run tools/eval_translate.py samples/man-tar.txt
 ```
