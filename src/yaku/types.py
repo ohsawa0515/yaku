@@ -42,6 +42,10 @@ class SourceProfile:
     # label like "Plan:" or "Error:" must stay with its value.
     clause_split: re.Pattern[str] | None = None
     clause_min_words: int = 0
+    # A segment matching clause_list is a list whose items are separated by
+    # the punctuation the match starts with, as in "a; b; and c". That
+    # punctuation is not split on, because the items share one subject.
+    clause_list: re.Pattern[str] | None = None
 
 
 @dataclass(frozen=True)

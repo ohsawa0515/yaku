@@ -118,6 +118,9 @@ def load_source(lang: str, dirs: Sequence[Path] | None = None) -> SourceProfile:
             if "clause_split" in data
             else None,
             clause_min_words=data.get("clause_min_words", 0),
+            clause_list=_compile(data["clause_list"], where)
+            if "clause_list" in data
+            else None,
         )
     except KeyError as exc:
         raise RuleError(f"{where} is missing key {exc}") from exc

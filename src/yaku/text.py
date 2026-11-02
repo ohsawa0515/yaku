@@ -44,12 +44,19 @@ def _split_lead_in(text: str, source: SourceProfile) -> list[str]:
     """Separate long lead-ins ending in a colon from what follows them."""
     if source.clause_split is None:
         return [text]
+    listed = source.clause_list.search(text) if source.clause_list else None
+    separator = listed.group(0)[0] if listed else None
     out: list[str] = []
-    start = 0
+    start = previous = 0
     for m in source.clause_split.finditer(text):
-        head = text[start : m.start() + 1]
-        if len(source.word.findall(head)) >= source.clause_min_words:
-            out.append(head.strip())
+        if m.group(0)[0] == separator:
+            continue
+        # Words are counted from the previous candidate, not the previous
+        # split, so that "do_one(); do_two();" never adds up to a clause.
+        clause = text[previous : m.start()]
+        previous = m.end()
+        if len(source.word.findall(clause)) >= source.clause_min_words:
+            out.append(text[start : m.start() + 1].strip())
             start = m.end()
     tail = text[start:].strip()
     if tail:

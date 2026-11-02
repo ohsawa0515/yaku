@@ -67,3 +67,32 @@ def test_short_label_stays_with_its_value(english):
 def test_colon_without_space_is_not_a_split_point(english):
     text = "This was checked by the validation rule at main.tf:8,3-13."
     assert split_sentences(text, english) == [text]
+
+
+def test_semicolon_between_clauses_is_split(english):
+    text = "This variable only affects clones and fetches; it is not yet used for pushes."
+    assert split_sentences(text, english) == [
+        "This variable only affects clones and fetches;",
+        "it is not yet used for pushes.",
+    ]
+
+
+def test_semicolon_list_is_not_split(english):
+    text = (
+        "The escape character followed by a dot closes the connection; followed by "
+        "control-Z suspends it; and followed by itself sends the escape character once."
+    )
+    assert split_sentences(text, english) == [text]
+
+
+def test_semicolons_in_code_are_not_split(english):
+    for text in ["do_one(); do_two(); do_three()", "; Don't trust file modes"]:
+        assert split_sentences(text, english) == [text]
+
+
+def test_colon_still_splits_inside_a_semicolon_list(english):
+    text = "It works in three steps as follows: read the file; parse it; and print it."
+    assert split_sentences(text, english) == [
+        "It works in three steps as follows:",
+        "read the file; parse it; and print it.",
+    ]
