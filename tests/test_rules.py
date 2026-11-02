@@ -211,3 +211,7 @@ def test_prose_with_quotes_or_percent_is_not_a_command():
         "% you just write them as %%. You can output a newline by using",
     ]:
         assert not looks_like_command(line), line
+
+
+def test_zsh_prompt_with_user_and_host_is_a_command():
+    assert looks_like_command("thomas@ninox ~ % aws --debug sqs list-queues")

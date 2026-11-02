@@ -38,6 +38,13 @@ WRAPPED_LINE_SHARE = 0.85
 
 _SPACES = re.compile(r"\s{2,}")
 
+# A log record after its timestamp: "- MainThread - botocore - DEBUG - ...",
+# "[ERROR] vertex ...". Each record stands alone and is never joined.
+_LOG_RECORD = re.compile(r"^(?:-\s|\[?(?:TRACE|DEBUG|INFO|WARN(?:ING)?|ERROR|FATAL)\]?[\s:])")
+
+# Inside a Python traceback every indented line is a frame or source code.
+_TRACEBACK = re.compile(r"^\s*Traceback \(most recent call last\):\s*$")
+
 
 @dataclass(frozen=True)
 class _Pending:
@@ -178,13 +185,29 @@ class Pipeline:
             out.append(line)
             pending.clear()
 
+        in_traceback = False
         for raw in raw_lines:
             indent, body, trailing, translatable, plain = self._classify(raw)
+            if _TRACEBACK.match(plain):
+                flush()
+                in_traceback, translatable = True, False
+            elif in_traceback and plain[:1].isspace():
+                translatable = False
+            else:
+                in_traceback = False
+            # A digit in the prefix means a timestamp was split off the line.
+            # Lines of a traceback are records too: none of them continues
+            # the sentence above.
+            record = in_traceback or (
+                any(c.isdigit() for c in indent) and bool(_LOG_RECORD.match(body))
+            )
+            if record:
+                flush()
             current = _Pending(raw, plain, indent, body, trailing)
-            wraps = bool(pending) and self._wraps_into(pending[-1], body, width)
+            wraps = bool(pending) and not record and self._wraps_into(pending[-1], body, width)
 
             if not translatable:
-                if (self.join or wraps) and self._is_fragment(plain, body, pending):
+                if not record and (self.join or wraps) and self._is_fragment(plain, body, pending):
                     pending.append(current)
                     continue
                 flush()
@@ -199,7 +222,9 @@ class Pipeline:
                 )
                 continue
 
-            if pending:
+            if record:
+                pass
+            elif pending:
                 if len(pending) >= MAX_JOINED_LINES:
                     flush()
                 elif self.join:

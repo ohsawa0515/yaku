@@ -165,3 +165,27 @@ def test_framed_diagnostic_is_translated_inside_the_frame(make):
     pipeline.run(lines)
     last = [line for line in lines if line.translatable][-1]
     assert pipeline.render(last)[0].startswith("│ ")
+
+
+def test_log_records_are_never_joined(make):
+    raw = [
+        "2023-02-08 08:51:32,665 - MainThread - awscli.clidriver - DEBUG - Exception caught in main()",
+        "2024-06-12 00:57:03,451 - MainThread - botocore.credentials - INFO - Found credentials in shared credentials file",
+        "2024-06-12 00:57:03,452 - MainThread - botocore.credentials - INFO - Looking for credentials in the environment",
+    ]
+    lines = make(join=True).prepare(raw)
+    assert not lines[0].translatable
+    assert [len(line.raws) for line in lines] == [1, 1, 1]
+
+
+def test_traceback_body_is_not_translated(make):
+    raw = [
+        "Traceback (most recent call last):",
+        '  File "/usr/lib/python3/awscli/clidriver.py", line 460, in main',
+        "    return command_table[parsed_args.command](remaining, parsed_args)",
+        "    raise error_class(parsed_response, operation_name)",
+        "botocore.errorfactory.InvalidRequestException: An error occurred when calling the operation.",
+    ]
+    lines = make(join=False).prepare(raw)
+    translated = [line.body for line in lines if line.translatable]
+    assert translated == [raw[-1]]

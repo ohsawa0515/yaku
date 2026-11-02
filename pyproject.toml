@@ -54,3 +54,7 @@ ignore = [
     "RUF001",  # ambiguous characters are intended: box drawing, fullwidth punctuation
     "RUF003",
 ]
+
+[tool.ruff.lint.per-file-ignores]
+# Test inputs are real command output, which is as long as it is.
+"tests/*" = ["E501"]

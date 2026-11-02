@@ -132,6 +132,24 @@ pattern = '^\s*"[\w\.\-]+"\s*:\s*'
 name    = "box-drawing"
 pattern = '^\s*[│┃├┤└┘┌┐─┬┴┼╵╷╭╮╯╰]'
 
+# Debug and trace records from a logging library: machine detail, not prose.
+# "- MainThread - botocore.hooks - DEBUG - ..." after its timestamp, or a
+# bare "DEBUG - ..." when the timestamp was cut off.
+[[passthrough]]
+name    = "debug-record"
+pattern = '^\s*(?:-\s+\S+\s+-\s+[\w.]+\s+-\s+|(?:\.\.\.\s*)?)(?:DEBUG|TRACE)\s+-\s'
+
+# A JSON object on one line, possibly as a Python bytes literal.
+[[passthrough]]
+name    = "json-object"
+pattern = '''^\s*b?['"]?\{\s*"[^"]+"\s*:'''
+
+# An HTTP header in canonical form, as signing debug output prints it:
+# "content-type:application/json", "x-amz-date:20240611T005703Z".
+[[passthrough]]
+name    = "canonical-header"
+pattern = '^\s*[a-z][a-z0-9\-]*:\S+\s*$'
+
 [[passthrough]]
 name    = "stack-frame"
 pattern = '^\s*(?:at |from |File ")'

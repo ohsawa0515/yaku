@@ -17,7 +17,7 @@ _INDENT = re.compile(r"^(\s*)(.*?)(\s*)$", re.DOTALL)
 # rule right at the start of the line is a frame; an indented one is part of
 # the content, such as the expression values inside a diagnostic.
 _GUTTER = re.compile(
-    r"^(?:(?:\d{4}-\d{2}-\d{2}[T ])?\d{2}:\d{2}:\d{2}(?:\.\d+)?"
+    r"^(?:(?:\d{4}-\d{2}-\d{2}[T ])?\d{2}:\d{2}:\d{2}(?:[.,]\d+)?"
     r"(?:Z|[+-]\d{2}:?\d{2})?\s+)?"
     r"(?:[│┃] ?)?"
 )

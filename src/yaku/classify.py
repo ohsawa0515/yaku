@@ -10,7 +10,7 @@ from yaku.types import SourceProfile, TargetProfile
 # A shell prompt makes the rest of the line a command whatever it contains.
 # A shell prompt makes the rest of the line a command whatever it contains:
 # "$ tar ...", "root@host:/path# kubectl ...", "➜  ~ kubectl ...".
-PROMPT = re.compile(r"^\s*(?:[$#>]|➜|\S+@\S+?[:~]\S*[#$%])\s+\S")
+PROMPT = re.compile(r"^\s*(?:[$#>]|➜|\S+@[\w.\-]+(?::\S*|\s+\S+)?\s?[#$%])\s+\S")
 
 # "%" is also a prompt (csh, and many manual pages), but documentation uses
 # it in prose too ("% you just write them as %%"), so it needs arguments.
