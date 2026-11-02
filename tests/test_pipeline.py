@@ -65,9 +65,9 @@ def test_wrapped_paragraph_is_joined_inside_unjoined_input(make):
     raw = [
         "Error: Value for undeclared variable",
         "",
-        "A variable named \"unknown\" was assigned on the command line, but the root",
+        'A variable named "unknown" was assigned on the command line, but the root',
         "module does not declare a variable of that name. To use this value, add a",
-        "\"variable\" block to the configuration.",
+        '"variable" block to the configuration.',
     ]
     pipeline = make(join=False)
     lines = pipeline.prepare(raw)
@@ -98,7 +98,7 @@ def test_terraform_source_excerpt_is_not_translated(make):
     raw = [
         "Error: Reference to undeclared local value",
         "",
-        "  on main.tf line 15, in resource \"local_file\" \"a\":",
+        '  on main.tf line 15, in resource "local_file" "a":',
         "  15:   content  = local.missing_value",
     ]
     pipeline = make(join=True)
@@ -150,10 +150,10 @@ def test_framed_diagnostic_is_translated_inside_the_frame(make):
     raw = [
         "\x1b[31m╷\x1b[0m",
         "\x1b[31m│\x1b[0m \x1b[1mError: Reference to undeclared local value\x1b[0m",
-        "\x1b[31m│\x1b[0m   on main.tf line 15, in resource \"local_file\" \"a\":",
+        '\x1b[31m│\x1b[0m   on main.tf line 15, in resource "local_file" "a":',
         "\x1b[31m│\x1b[0m   15:   content  = local.missing_value",
-        "\x1b[31m│\x1b[0m     \x1b[90m│\x1b[0m var.env is \"qa\"",
-        "\x1b[31m│\x1b[0m A local value with the name \"missing_value\" has not been declared.",
+        '\x1b[31m│\x1b[0m     \x1b[90m│\x1b[0m var.env is "qa"',
+        '\x1b[31m│\x1b[0m A local value with the name "missing_value" has not been declared.',
         "\x1b[31m╵\x1b[0m",
     ]
     pipeline = make(join=False)

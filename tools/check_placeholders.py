@@ -54,9 +54,7 @@ def main() -> int:
         filled = CARRIER.format(ph=fmt % 1, ph2=fmt % 2)
         total = len(sp.encode(filled, out_type=str))
         per = (total - bare) / 2
-        print(
-            f"{fmt:10} {len(standalone):11} {per:16.1f}  {standalone}"
-        )
+        print(f"{fmt:10} {len(standalone):11} {per:16.1f}  {standalone}")
 
     print("\nround trip through the tokeniser:")
     for fmt in CANDIDATES:

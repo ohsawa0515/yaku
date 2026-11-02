@@ -42,12 +42,8 @@ def build_parser() -> argparse.ArgumentParser:
         choices=["both", "original", "mark"],
         help="what to emit for a line that fails the quality gate (default: both)",
     )
-    parser.add_argument(
-        "--mask-off", default="", help="comma-separated mask rules to disable"
-    )
-    parser.add_argument(
-        "--mask-on", default="", help="comma-separated mask rules to enable"
-    )
+    parser.add_argument("--mask-off", default="", help="comma-separated mask rules to disable")
+    parser.add_argument("--mask-on", default="", help="comma-separated mask rules to enable")
 
     joining = parser.add_mutually_exclusive_group()
     joining.add_argument(
@@ -70,7 +66,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--dry-run", action="store_true", help="show the classification and masking only"
     )
-    parser.add_argument("--show-paths", action="store_true", help="print resolved locations and exit")
+    parser.add_argument(
+        "--show-paths", action="store_true", help="print resolved locations and exit"
+    )
     parser.add_argument(
         "--show-reason",
         action="store_true",

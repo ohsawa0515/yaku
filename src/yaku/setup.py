@@ -42,10 +42,15 @@ def converter_command(uv: str, target: TargetProfile, output_dir: Path) -> list[
     command += [
         "--",
         "ct2-transformers-converter",
-        "--model", target.model_repo,
-        "--output_dir", str(output_dir),
-        "--quantization", "int8",
-        "--copy_files", "source.spm", "target.spm",
+        "--model",
+        target.model_repo,
+        "--output_dir",
+        str(output_dir),
+        "--quantization",
+        "int8",
+        "--copy_files",
+        "source.spm",
+        "target.spm",
     ]
     if target.model_revision:
         command += ["--revision", target.model_revision]
@@ -82,9 +87,7 @@ def install(
         raise SetupError("uv is required to convert the model: https://docs.astral.sh/uv/")
 
     model_dir.parent.mkdir(parents=True, exist_ok=True)
-    with tempfile.TemporaryDirectory(
-        dir=model_dir.parent, prefix=f".{model_dir.name}-"
-    ) as scratch:
+    with tempfile.TemporaryDirectory(dir=model_dir.parent, prefix=f".{model_dir.name}-") as scratch:
         work = Path(scratch)
         output = work / model_dir.name
         # Keep the ~300 MB PyTorch checkpoint out of the user's Hugging Face

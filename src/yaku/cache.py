@@ -10,6 +10,7 @@ never stop a translation.
 
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import sqlite3
 from pathlib import Path
@@ -66,21 +67,17 @@ class Cache:
     def put(self, text: str, value: str) -> None:
         if self._conn is None:
             return
-        try:
+        with contextlib.suppress(sqlite3.Error):
             self._conn.execute(
                 "INSERT OR REPLACE INTO entry VALUES (?, ?)",
                 (self._key(text), value),
             )
-        except sqlite3.Error:
-            pass
 
     def commit(self) -> None:
         if self._conn is None:
             return
-        try:
+        with contextlib.suppress(sqlite3.Error):
             self._conn.commit()
-        except sqlite3.Error:
-            pass
 
     def close(self) -> None:
         if self._conn is None:
@@ -93,7 +90,7 @@ class Cache:
         finally:
             self._conn = None
 
-    def __enter__(self) -> "Cache":
+    def __enter__(self) -> Cache:
         return self
 
     def __exit__(

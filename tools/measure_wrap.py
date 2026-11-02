@@ -47,9 +47,7 @@ def main(argv: list[str]) -> int:
             passthrough=passthrough,
             cache=Cache(None, "measure"),
         )
-        translatable = sum(
-            1 for line in raw if pipeline._classify(line)[3]
-        )
+        translatable = sum(1 for line in raw if pipeline._classify(line)[3])
         ratio = pipeline.wrap_ratio(raw)
         join = "yes" if ratio >= WRAP_THRESHOLD else "no"
         print(f"{path.name:28} {len(raw):7} {translatable:7} {ratio:7.2f}  {join}")

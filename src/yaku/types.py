@@ -1,6 +1,7 @@
 """Data contracts shared by every stage of the pipeline.
 
-Nothing here imports a translation backend, so these types stay usable in tests that never load a model.
+Nothing here imports a translation backend, so these types stay usable in
+tests that never load a model.
 """
 
 from __future__ import annotations

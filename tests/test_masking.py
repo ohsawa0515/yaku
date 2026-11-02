@@ -7,9 +7,7 @@ from yaku.types import MaskRule
 
 
 def rule(name: str, pattern: str, order: int, enabled: bool = True) -> MaskRule:
-    return MaskRule(
-        name=name, pattern=re.compile(pattern), order=order, enabled=enabled
-    )
+    return MaskRule(name=name, pattern=re.compile(pattern), order=order, enabled=enabled)
 
 
 @pytest.fixture
@@ -84,8 +82,6 @@ def test_residue_counts_numbers_never_issued(masker):
     assert masker.residue("T1 と T9", 2) == 1
 
 
-
-
 def test_word_fused_placeholder_counts_as_lost(mask_rules, japanese):
     """A decoder that emits "T1stdout" kept the characters and lost the value."""
     masker = Masker(rules=mask_rules, target=japanese)
@@ -152,8 +148,10 @@ def test_sentence_final_period_stays_outside_the_placeholder(mask_rules, japanes
 
 def test_url_does_not_take_the_trailing_comma(mask_rules, japanese):
     masker = Masker(rules=mask_rules, target=japanese)
-    masked, values = masker.mask("See https://example.com/docs, then continue.")
+    _masked, values = masker.mask("See https://example.com/docs, then continue.")
     assert "https://example.com/docs" in values
+
+
 def test_period_inside_a_path_is_kept(mask_rules, japanese):
     masker = Masker(rules=mask_rules, target=japanese)
     _, values = masker.mask("Read /etc/ssh/ssh_config.d/local.conf before connecting.")

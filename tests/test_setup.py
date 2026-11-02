@@ -74,8 +74,14 @@ def test_failed_conversion_leaves_nothing_behind(tmp_path, japanese):
 
 def test_incomplete_conversion_is_rejected(tmp_path, japanese):
     model_dir = tmp_path / "fugumt-en-ja"
-    with pytest.raises(SetupError, match="source.spm"):
-        install(japanese, model_dir, uv="uv", run=fake_converter(produce=["model.bin", "target.spm"]), log=quiet)
+    with pytest.raises(SetupError, match=r"source\.spm"):
+        install(
+            japanese,
+            model_dir,
+            uv="uv",
+            run=fake_converter(produce=["model.bin", "target.spm"]),
+            log=quiet,
+        )
     assert not model_dir.exists()
 
 

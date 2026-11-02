@@ -45,13 +45,11 @@ def wilson(hits: int, n: int, z: float = 1.96) -> tuple[float, float]:
 
 def pool_adjacent_violators(rates: list[float], sizes: list[int]) -> list[float]:
     """Closest non-increasing sequence to rates, weighted by sizes."""
-    blocks = [[r * n, n, 1] for r, n in zip(rates, sizes)]  # hits, size, members
+    blocks = [[r * n, n, 1] for r, n in zip(rates, sizes, strict=True)]  # hits, size, members
     merged: list[list[float]] = []
     for block in blocks:
         merged.append(block)
-        while len(merged) > 1 and (
-            merged[-2][0] / merged[-2][1] < merged[-1][0] / merged[-1][1]
-        ):
+        while len(merged) > 1 and (merged[-2][0] / merged[-2][1] < merged[-1][0] / merged[-1][1]):
             hits, size, members = merged.pop()
             merged[-1][0] += hits
             merged[-1][1] += size
@@ -69,14 +67,14 @@ def band_table(records: list[dict], width: float, flag_at: float) -> None:
     keys = sorted(bands)
     hits = [sum(1 for r in bands[k] if r["label"] == "dropped") for k in keys]
     sizes = [len(bands[k]) for k in keys]
-    smooth = pool_adjacent_violators([h / n for h, n in zip(hits, sizes)], sizes)
+    smooth = pool_adjacent_violators([h / n for h, n in zip(hits, sizes, strict=True)], sizes)
 
     print(
         f"\n{'band':>11} {'labelled':>8} {'dropped':>7} {'rate':>5}"
         f"  {'95% interval':>12} {'smoothed':>8}"
     )
     threshold = None
-    for key, h, n, rate in zip(keys, hits, sizes, smooth):
+    for key, h, n, rate in zip(keys, hits, sizes, smooth, strict=True):
         low, high = wilson(h, n)
         hi_edge = (key + 1) * width
         mark = "  flag" if rate >= flag_at else ""
@@ -106,9 +104,7 @@ def main(argv: list[str]) -> int:
 
     dropped = [r for r in records if r["label"] == "dropped"]
     total_dropped = sum(map(weight, dropped))
-    caught_by_placeholder = sum(
-        weight(r) for r in dropped if r.get("placeholders_ok") is False
-    )
+    caught_by_placeholder = sum(weight(r) for r in dropped if r.get("placeholders_ok") is False)
 
     print(f"labelled segments {len(records)}, dropped {len(dropped)}")
     print(
@@ -124,9 +120,7 @@ def main(argv: list[str]) -> int:
         precision = true_w / flagged_w if flagged_w else 0.0
         recall = true_w / total_dropped if total_dropped else 0.0
         f1 = 2 * precision * recall / (precision + recall) if precision + recall else 0.0
-        print(
-            f"{threshold:9.2f} {flagged_w:8.0f} {precision:10.0%} {recall:7.0%} {f1:5.2f}"
-        )
+        print(f"{threshold:9.2f} {flagged_w:8.0f} {precision:10.0%} {recall:7.0%} {f1:5.2f}")
     if args.band:
         band_table(records, args.band, args.flag_at)
     return 0

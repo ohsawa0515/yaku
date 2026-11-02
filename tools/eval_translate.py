@@ -40,9 +40,7 @@ from yaku.pipeline import Pipeline
 from yaku.types import MaskRule
 
 
-def _apply_switches(
-    rules: list[MaskRule], enable: set[str], disable: set[str]
-) -> list[MaskRule]:
+def _apply_switches(rules: list[MaskRule], enable: set[str], disable: set[str]) -> list[MaskRule]:
     out = []
     for rule in rules:
         enabled = rule.enabled
@@ -77,9 +75,7 @@ def main() -> int:
 
     source = load_source("en")
     target = load_target(args.lang)
-    rules = _apply_switches(
-        load_mask_rules(), _names(args.mask_on), _names(args.mask_off)
-    )
+    rules = _apply_switches(load_mask_rules(), _names(args.mask_on), _names(args.mask_off))
     masker = Masker(rules=rules, target=target)
     passthrough = load_passthrough()
 
@@ -135,18 +131,12 @@ def main() -> int:
         print(f"{path.name}")
         print(f"  translated lines   {translated}")
         saved = 1 - mask_tokens / max(bare_tokens, 1)
-        print(
-            f"  tokens             bare {bare_tokens}"
-            f"  masked {mask_tokens}  ({saved:.1%} fewer)"
-        )
+        print(f"  tokens             bare {bare_tokens}  masked {mask_tokens}  ({saved:.1%} fewer)")
         print(
             f"  fertility          bare {bare_tokens / max(bare_chars, 1):.3f}"
             f"  masked {mask_tokens / max(mask_chars, 1):.3f} tok/char"
         )
-        print(
-            f"  restore failures   {failures} "
-            f"({failures / max(translated, 1):.1%})"
-        )
+        print(f"  restore failures   {failures} ({failures / max(translated, 1):.1%})")
         print(f"  flagged            {flagged} ({flagged / max(translated, 1):.1%})")
         for reason, count in reasons.most_common():
             print(f"      {reason:24} {count}")

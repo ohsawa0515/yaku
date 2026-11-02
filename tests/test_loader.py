@@ -1,12 +1,9 @@
-import re
-
 import pytest
 
 from yaku.loader import (
     RuleError,
     load_mask_rules,
     load_passthrough,
-    load_source,
     load_target,
 )
 
@@ -39,8 +36,7 @@ def test_duplicate_orders_are_rejected(tmp_path):
     write(
         tmp_path,
         "syntax/x.toml",
-        "[[rule]]\nname='A'\norder=10\npattern='a'\n"
-        "[[rule]]\nname='B'\norder=10\npattern='b'\n",
+        "[[rule]]\nname='A'\norder=10\npattern='a'\n[[rule]]\nname='B'\norder=10\npattern='b'\n",
     )
     with pytest.raises(RuleError, match="duplicate order 10"):
         load_mask_rules([tmp_path])

@@ -13,7 +13,6 @@ from dataclasses import dataclass, field
 
 from yaku.types import MaskRule, TargetProfile
 
-
 _CLOSING = ".,;:"
 
 
@@ -24,9 +23,7 @@ def _at_break(text: str, end: int) -> bool:
 def _glued(text: str, start: int, end: int) -> bool:
     before = text[start - 1] if start > 0 else ""
     after = text[end] if end < len(text) else ""
-    return (before.isascii() and before.isalnum()) or (
-        after.isascii() and after.isalnum()
-    )
+    return (before.isascii() and before.isalnum()) or (after.isascii() and after.isalnum())
 
 
 @dataclass
@@ -38,9 +35,7 @@ class Masker:
     _active: list[MaskRule] = field(init=False, repr=False)
 
     def __post_init__(self) -> None:
-        self._active = sorted(
-            (rule for rule in self.rules if rule.enabled), key=lambda r: r.order
-        )
+        self._active = sorted((rule for rule in self.rules if rule.enabled), key=lambda r: r.order)
 
     def mask(self, text: str) -> tuple[str, list[str]]:
         """Replace identifiers with placeholders, in rule order."""
@@ -74,14 +69,13 @@ class Masker:
     def unmask(self, text: str, values: list[str]) -> str:
         """Put the values back.
 
-        Descending order matters: replacing T1 first would also rewrite the leading characters of T11.
+        Descending order matters: replacing T1 first would also rewrite the
+        leading characters of T11.
         """
 
         restored = text
         for index in range(len(values), 0, -1):
-            restored = restored.replace(
-                self.target.placeholder(index), values[index - 1]
-            )
+            restored = restored.replace(self.target.placeholder(index), values[index - 1])
         return restored
 
     def lost(self, text: str, count: int) -> int:

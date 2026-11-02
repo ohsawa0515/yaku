@@ -1,5 +1,3 @@
-import re
-
 from yaku.classify import is_passthrough
 from yaku.masking import Masker
 
@@ -35,13 +33,13 @@ def test_bracket_contents_are_masked_as_one_value(mask_rules, japanese):
 
 def test_config_key_survives_as_one_value(mask_rules, japanese):
     masker = Masker(rules=mask_rules, target=japanese)
-    masked, values = masker.mask("zstd:frame-per-file is supported.")
+    _masked, values = masker.mask("zstd:frame-per-file is supported.")
     assert values == ["zstd:frame-per-file"]
 
 
 def test_comparison_operator_is_masked(mask_rules, japanese):
     masker = Masker(rules=mask_rules, target=japanese)
-    masked, values = masker.mask("The program exits >0 if an error occurs.")
+    _masked, values = masker.mask("The program exits >0 if an error occurs.")
     assert ">0" in values
 
 
@@ -57,9 +55,7 @@ def test_shipped_rules_round_trip(mask_rules, japanese):
 
 
 def test_progress_rule_ignores_prose(passthrough):
-    assert not is_passthrough(
-        "Note: Reading the archive is slower than writing it.", passthrough
-    )
+    assert not is_passthrough("Note: Reading the archive is slower than writing it.", passthrough)
     assert not is_passthrough(
         "Warning: Creating a sparse file may fail on some systems.", passthrough
     )
@@ -89,9 +85,9 @@ def test_standalone_hash_is_still_masked(mask_rules, japanese):
 def test_terraform_diagnostic_lines_pass_through(passthrough):
     for line in [
         "  15:   content  = local.missing_value",
-        "   6: variable \"env\" {",
+        '   6: variable "env" {',
         "    ├────────────────",
-        "    │ var.env is \"qa\"",
+        '    │ var.env is "qa"',
     ]:
         assert is_passthrough(line, passthrough), line
 
@@ -135,8 +131,10 @@ def test_describe_fields_pass_through(passthrough):
 
 
 def test_table_header_passes_through(passthrough):
-    for line in ["  Type    Reason     Age   From               Message",
-                 "    FirstSeen\tLastSeen\tCount\tFrom\tType\tReason\tMessage"]:
+    for line in [
+        "  Type    Reason     Age   From               Message",
+        "    FirstSeen\tLastSeen\tCount\tFrom\tType\tReason\tMessage",
+    ]:
         assert is_passthrough(line, passthrough), line
 
 

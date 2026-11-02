@@ -53,7 +53,9 @@ def test_too_long_fails(masker, japanese):
 
 def test_repetition_loop_fails(masker, japanese):
     source = "Create a new archive from the given files."
-    verdict = judge(source, "アーカイブアーカイブアーカイブアーカイブアーカイブ", 0, masker, japanese)
+    verdict = judge(
+        source, "アーカイブアーカイブアーカイブアーカイブアーカイブ", 0, masker, japanese
+    )
     assert not verdict.ok
     assert verdict.reason == "repetition loop"
 

@@ -43,7 +43,7 @@ class CT2Engine:
         device: str = "cpu",
         compute_type: str = "int8",
         threads: int = 0,
-    ) -> "CT2Engine":
+    ) -> CT2Engine:
         if not (model_dir / "model.bin").is_file():
             raise EngineError(f"no model in {model_dir}")
 
@@ -74,7 +74,7 @@ class CT2Engine:
     def translate(self, texts: list[str]) -> list[str]:
         if not texts:
             return []
-        batch = [self.source_sp.encode(t, out_type=str) + [EOS] for t in texts]
+        batch = [[*self.source_sp.encode(t, out_type=str), EOS] for t in texts]
         results = self.translator.translate_batch(
             batch,
             beam_size=self.beam,
@@ -83,7 +83,4 @@ class CT2Engine:
             max_decoding_length=self.max_decoding_length,
             replace_unknowns=True,
         )
-        return [
-            self.target_sp.decode([t for t in r.hypotheses[0] if t != EOS])
-            for r in results
-        ]
+        return [self.target_sp.decode([t for t in r.hypotheses[0] if t != EOS]) for r in results]

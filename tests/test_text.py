@@ -100,6 +100,7 @@ def test_colon_still_splits_inside_a_semicolon_list(english):
 
 def test_split_gutter_takes_the_frame_only():
     from yaku.text import split_gutter
+
     assert split_gutter("│ Error: x") == ("│ ", "Error: x")
     assert split_gutter("│   15:   content") == ("│ ", "  15:   content")
     assert split_gutter("plain line") == ("", "plain line")
@@ -107,6 +108,7 @@ def test_split_gutter_takes_the_frame_only():
 
 def test_an_indented_rule_is_not_a_frame():
     from yaku.text import split_gutter
+
     assert split_gutter('    │ var.env is "qa"') == ("", '    │ var.env is "qa"')
 
 
@@ -132,15 +134,19 @@ def test_acronym_ends_a_sentence(english):
 
 
 def test_abbreviation_before_lowercase_is_not_split(english):
-    for text in ["Use a tool, e.g. tar or cpio, for this.",
-                 "Names, sizes, etc. are listed below.",
-                 "See the manual, cf. section two."]:
+    for text in [
+        "Use a tool, e.g. tar or cpio, for this.",
+        "Names, sizes, etc. are listed below.",
+        "See the manual, cf. section two.",
+    ]:
         assert split_sentences(text, english) == [text]
 
 
 def test_list_numbers_and_ellipses_do_not_end_a_lowercase_sentence(english):
-    for text in ["1. have a wonderful idea",
-                 "3. by listing files as arguments to the commit command",
-                 "ssh-keygen -L file ... ssh-keygen -A",
-                 "the shell and pshell commands (! and #)"]:
+    for text in [
+        "1. have a wonderful idea",
+        "3. by listing files as arguments to the commit command",
+        "ssh-keygen -L file ... ssh-keygen -A",
+        "the shell and pshell commands (! and #)",
+    ]:
         assert split_sentences(text, english) == [text], text

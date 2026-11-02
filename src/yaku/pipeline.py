@@ -111,9 +111,7 @@ class Pipeline:
         )
         return gutter + indent, body, trailing, translatable, plain
 
-    def _is_fragment(
-        self, line: str, body: str, pending: list[_Pending]
-    ) -> bool:
+    def _is_fragment(self, line: str, body: str, pending: list[_Pending]) -> bool:
         """Whether a rejected line continues the sentence above it.
 
         A wrapped sentence can end in a fragment of one or two words, which
@@ -150,11 +148,7 @@ class Pipeline:
     def _wrap_width(self, raw_lines: Sequence[str]) -> int:
         """Estimate the column the input was wrapped at."""
         return max(
-            (
-                len(strip_ansi(raw).rstrip())
-                for raw in raw_lines
-                if self._classify(raw)[3]
-            ),
+            (len(strip_ansi(raw).rstrip()) for raw in raw_lines if self._classify(raw)[3]),
             default=0,
         )
 
@@ -247,7 +241,7 @@ class Pipeline:
         if pending:
             self.stats.requested = len(pending)
             outputs = self.engine.translate([p[2] for p in pending])
-            for (line, index, segment), output in zip(pending, outputs):
+            for (line, index, segment), output in zip(pending, outputs, strict=True):
                 line.segment_results[index] = output
                 self.cache.put(segment, output)
             self.cache.commit()
@@ -266,15 +260,13 @@ class Pipeline:
         Segments are checked separately because a clause dropped from one of
         them leaves the concatenated length plausible.
         """
-        for segment, result in zip(line.segments, line.segment_results):
+        for segment, result in zip(line.segments, line.segment_results, strict=True):
             verdict = judge(segment, result, 0, self.masker, self.target)
             if not verdict.ok:
                 return verdict
         if line.result is None:
             return OK
-        return judge(
-            line.masked, line.result, len(line.values), self.masker, self.target
-        )
+        return judge(line.masked, line.result, len(line.values), self.masker, self.target)
 
     # -- output -----------------------------------------------------------
 

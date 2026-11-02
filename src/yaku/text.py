@@ -35,7 +35,7 @@ def split_gutter(text: str) -> tuple[str, str]:
     m = _GUTTER.match(text)
     if m is None:
         return "", text
-    return m.group(0), text[m.end():]
+    return m.group(0), text[m.end() :]
 
 
 def split_sentences(text: str, source: SourceProfile) -> list[str]:

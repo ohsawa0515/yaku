@@ -51,7 +51,7 @@ def main() -> int:
         for line in lines:
             if not line.translatable:
                 continue
-            for segment, result in zip(line.segments, line.segment_results):
+            for segment, result in zip(line.segments, line.segment_results, strict=True):
                 if segment in seen:
                     continue
                 seen.add(segment)
@@ -64,9 +64,7 @@ def main() -> int:
                     "ratio": round(ratio, 3),
                     "source": segment,
                     "translation": result,
-                    "placeholders_ok": masker.lost(result, count) == 0
-                    if count
-                    else None,
+                    "placeholders_ok": masker.lost(result, count) == 0 if count else None,
                 }
                 print(json.dumps(record, ensure_ascii=False))
     return 0

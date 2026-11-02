@@ -31,9 +31,7 @@ def test_passthrough_matches_any_pattern():
 
 
 def test_english_prose_is_translatable(english, japanese):
-    assert is_translatable(
-        "Create a new archive from the given files.", english, japanese
-    )
+    assert is_translatable("Create a new archive from the given files.", english, japanese)
 
 
 def test_short_fragment_is_not_translatable(english, japanese):

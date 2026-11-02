@@ -41,7 +41,8 @@ def _syntax_files(dirs: Sequence[Path]) -> list[Path]:
 def load_mask_rules(dirs: Sequence[Path] | None = None) -> list[MaskRule]:
     """Mask rules from every syntax file, sorted by order.
 
-    A later directory replaces a rule of the same name, which lets a user adjust one pattern without copying the whole shipped set.
+    A later directory replaces a rule of the same name, which lets a user
+    adjust one pattern without copying the whole shipped set.
     """
     by_name: dict[str, MaskRule] = {}
     for path in _syntax_files(paths.rule_dirs() if dirs is None else dirs):
@@ -67,9 +68,7 @@ def _reject_duplicate_orders(rules: Sequence[MaskRule]) -> None:
     seen: dict[int, str] = {}
     for rule in rules:
         if rule.order in seen:
-            raise RuleError(
-                f"duplicate order {rule.order}: {seen[rule.order]} and {rule.name}"
-            )
+            raise RuleError(f"duplicate order {rule.order}: {seen[rule.order]} and {rule.name}")
         seen[rule.order] = rule.name
 
 
@@ -114,13 +113,9 @@ def load_source(lang: str, dirs: Sequence[Path] | None = None) -> SourceProfile:
             sentence_end=_compile(data["sentence_end"], where),
             sentence_split=_compile(data["sentence_split"], where),
             max_segment_chars=data["max_segment_chars"],
-            clause_split=_compile(data["clause_split"], where)
-            if "clause_split" in data
-            else None,
+            clause_split=_compile(data["clause_split"], where) if "clause_split" in data else None,
             clause_min_words=data.get("clause_min_words", 0),
-            clause_list=_compile(data["clause_list"], where)
-            if "clause_list" in data
-            else None,
+            clause_list=_compile(data["clause_list"], where) if "clause_list" in data else None,
         )
     except KeyError as exc:
         raise RuleError(f"{where} is missing key {exc}") from exc
