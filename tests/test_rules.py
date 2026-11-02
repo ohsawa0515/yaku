@@ -121,3 +121,44 @@ def test_kubectl_example_rule_ignores_prose(passthrough):
         "kubectl uses the current context by default",
     ]:
         assert not is_passthrough(line, passthrough), line
+
+
+def test_describe_fields_pass_through(passthrough):
+    for line in [
+        "Name:         nginx-deployment-67d4bdd6f5-w6kd7",
+        "    Restart Count:  0",
+        "  Controlled By:  ReplicaSet/nginx-deployment-67d4bdd6f5",
+        "  Namespace:\tdefault",
+        "    Type:                    Projected (a volume that contains injected data)",
+    ]:
+        assert is_passthrough(line, passthrough), line
+
+
+def test_table_header_passes_through(passthrough):
+    for line in ["  Type    Reason     Age   From               Message",
+                 "    FirstSeen\tLastSeen\tCount\tFrom\tType\tReason\tMessage"]:
+        assert is_passthrough(line, passthrough), line
+
+
+def test_field_rules_ignore_prose_with_a_colon(passthrough):
+    for line in [
+        "     Note: the archive must exist before it can be updated.",
+        "     The following options are available: create, list and extract.",
+        "Example: tar -cf archive.tar foo",
+        "     Keyboard-interactive authentication works as follows: The server",
+    ]:
+        assert not is_passthrough(line, passthrough), line
+
+
+def test_sha256_digest_is_masked(mask_rules, japanese):
+    digest = "5403af59a2b46ee5a23fb0ae4b1e077f7ca5c5fb7af16e1ab21c00e0e616462a"
+    _, values = Masker(rules=mask_rules, target=japanese).mask(f"The container {digest} restarted.")
+    assert digest in values
+
+
+def test_describe_mounts_and_taints_pass_through(passthrough):
+    for line in [
+        "      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-bgsgp (ro)",
+        "                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s",
+    ]:
+        assert is_passthrough(line, passthrough), line

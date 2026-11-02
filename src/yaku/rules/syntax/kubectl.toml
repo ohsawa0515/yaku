@@ -17,3 +17,25 @@ pattern = '^\s*(?:Normal|Warning)\s+\w+\s+\d'
 [[passthrough]]
 name    = "example-invocation"
 pattern = '^\s*kubectl(?:\s+(?!(?:the|a|an|of|to|is|are|be|and|or|in|on|for|with|that|this|can|will|may|it|by|from|as|when|if|not)\b)[a-z0-9][\w.\-/:=]*)+\s*$'
+
+# A field of a describe record: "Name:         nginx", "Type:	Secret".
+# The gap of two or more spaces or a tab after the colon is what separates a
+# record from prose; a sentence never pads its colon to align a column.
+[[passthrough]]
+name    = "field-record"
+pattern = '^\s*[A-Z][\w\-]*(?: [A-Za-z][\w\-]*){0,3}:(?:\s{2,}|\t)\S'
+
+# The header of a column-aligned table: "Type    Reason   Age   From".
+[[passthrough]]
+name    = "table-header"
+pattern = '^\s*[A-Z][A-Za-z]*(?:(?:\s{2,}|\t+)[A-Z][A-Za-z]*){2,}\s*$'
+
+# A volume mount under Mounts: "/var/run/secrets/... from kube-api-access (ro)".
+[[passthrough]]
+name    = "mount"
+pattern = '^\s+/\S* from \S+ \((?:ro|rw)\)\s*$'
+
+# A taint or toleration: "node.kubernetes.io/unreachable:NoExecute op=Exists".
+[[passthrough]]
+name    = "taint"
+pattern = ':(?:NoExecute|NoSchedule|PreferNoSchedule)\b'
