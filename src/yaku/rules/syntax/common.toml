@@ -26,14 +26,17 @@ name    = "DOTQUOTED"
 order   = 60
 pattern = '"[^"\n]{1,60}"(?:\."[^"\n]{1,60}")+'
 
+# Paths are taken before the dotted-name rules (TFADDR, RESOURCE): a path
+# component such as ssh_config.d or data.json would otherwise be masked on
+# its own and split the path into pieces.
 [[rule]]
 name    = "ABSPATH"
-order   = 80
+order   = 32
 pattern = '(?:/[\w.\-]+){2,}/?'
 
 [[rule]]
 name    = "RELPATH"
-order   = 90
+order   = 34
 pattern = '(?:\./)?(?:[\w.\-]+/)+[\w.\-]+\.\w{1,6}\b'
 
 [[rule]]

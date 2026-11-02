@@ -154,3 +154,13 @@ def test_url_does_not_take_the_trailing_comma(mask_rules, japanese):
     masker = Masker(rules=mask_rules, target=japanese)
     masked, values = masker.mask("See https://example.com/docs, then continue.")
     assert "https://example.com/docs" in values
+def test_period_inside_a_path_is_kept(mask_rules, japanese):
+    masker = Masker(rules=mask_rules, target=japanese)
+    _, values = masker.mask("Read /etc/ssh/ssh_config.d/local.conf before connecting.")
+    assert "/etc/ssh/ssh_config.d/local.conf" in values
+
+
+def test_path_with_a_data_file_stays_whole(mask_rules, japanese):
+    masker = Masker(rules=mask_rules, target=japanese)
+    _, values = masker.mask("It reads /usr/share/app/data.json at start-up.")
+    assert "/usr/share/app/data.json" in values
