@@ -37,6 +37,9 @@ def is_passthrough(body: str, patterns: Sequence[re.Pattern[str]]) -> bool:
 def looks_like_command(body: str) -> bool:
     if PROMPT.match(body):
         return True
+    # A trailing backslash continues a shell command onto the next line.
+    if body.rstrip().endswith("\\"):
+        return True
 
     name = COMMAND_NAME.match(body)
     if name is not None and ARGUMENT.search(body[name.end() :]):

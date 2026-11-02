@@ -46,3 +46,7 @@ def test_symbol_heavy_line_is_not_translatable(english, japanese):
 
 def test_line_containing_japanese_is_not_translatable(english, japanese):
     assert not is_translatable("This line has 日本語 in it already", english, japanese)
+
+
+def test_shell_line_continuation_is_a_command():
+    assert looks_like_command("aws ec2 describe-instances \\")
