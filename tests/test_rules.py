@@ -162,3 +162,8 @@ def test_describe_mounts_and_taints_pass_through(passthrough):
         "                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s",
     ]:
         assert is_passthrough(line, passthrough), line
+
+
+def test_tree_output_passes_through(passthrough):
+    for line in ["├── src", "│   └── yaku", "└── README.md"]:
+        assert is_passthrough(line, passthrough), line

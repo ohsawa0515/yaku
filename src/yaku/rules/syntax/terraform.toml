@@ -39,8 +39,3 @@ pattern = '^\s*(?:Acquiring|Releasing) state lock'
 [[passthrough]]
 name    = "diagnostic-source"
 pattern = '^\s{2,}\d+:\s+\S'
-
-# Box-drawing characters frame the expression values in a diagnostic.
-[[passthrough]]
-name    = "diagnostic-frame"
-pattern = '^\s*[│├╵╷]'

@@ -103,3 +103,8 @@ def test_split_gutter_takes_the_frame_only():
     assert split_gutter("│ Error: x") == ("│ ", "Error: x")
     assert split_gutter("│   15:   content") == ("│ ", "  15:   content")
     assert split_gutter("plain line") == ("", "plain line")
+
+
+def test_an_indented_rule_is_not_a_frame():
+    from yaku.text import split_gutter
+    assert split_gutter('    │ var.env is "qa"') == ("", '    │ var.env is "qa"')

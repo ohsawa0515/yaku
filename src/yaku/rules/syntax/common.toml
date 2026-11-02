@@ -123,6 +123,12 @@ pattern = '^\s*[\w\.\-]+\s*=\s*'
 name    = "json-key"
 pattern = '^\s*"[\w\.\-]+"\s*:\s*'
 
+# A line drawn with box characters: tree output, table borders, and the
+# frames around values inside a terraform diagnostic.
+[[passthrough]]
+name    = "box-drawing"
+pattern = '^\s*[│┃├┤└┘┌┐─┬┴┼╵╷╭╮╯╰]'
+
 [[passthrough]]
 name    = "stack-frame"
 pattern = '^\s*(?:at |from |File ")'

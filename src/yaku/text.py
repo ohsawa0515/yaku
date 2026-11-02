@@ -13,7 +13,9 @@ _INDENT = re.compile(r"^(\s*)(.*?)(\s*)$", re.DOTALL)
 
 # The vertical rule that frames every line of a diagnostic, as terraform
 # prints when colour is on: "│ Error: ...". It is layout, like indentation.
-_GUTTER = re.compile(r"^\s*[│┃]\s?")
+# Only a rule in the first column is a frame; an indented one is part of the
+# content, such as the expression values inside a diagnostic.
+_GUTTER = re.compile(r"^[│┃] ?")
 
 
 def strip_ansi(text: str) -> str:
