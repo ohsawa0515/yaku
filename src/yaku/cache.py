@@ -1,0 +1,102 @@
+"""A translation cache keyed on the normalised masked text.
+
+Command output repeats the same sentence many times with different values, so
+a cache turns most of a large input into lookups. Every failure here is
+swallowed: a missing cache must never stop a translation.
+"""
+
+from __future__ import annotations
+
+import hashlib
+import sqlite3
+from pathlib import Path
+from types import TracebackType
+
+_SCHEMA = """
+CREATE TABLE IF NOT EXISTS entry (
+    key   TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+)
+"""
+
+
+class Cache:
+    """Key-value store backed by SQLite, or a no-op when it cannot open.
+
+    The namespace covers everything that changes what a translation looks
+    like: model, decoding width and the active rule set. A stale entry from a
+    different configuration would otherwise be served as if it were current.
+    """
+
+    def __init__(self, path: Path | None, namespace: str) -> None:
+        self.namespace = namespace
+        self._conn: sqlite3.Connection | None = None
+        if path is None:
+            return
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            self._conn = sqlite3.connect(str(path))
+            self._conn.execute(_SCHEMA)
+            self._conn.commit()
+        except (sqlite3.Error, OSError):
+            self._conn = None
+
+    @property
+    def enabled(self) -> bool:
+        return self._conn is not None
+
+    def _key(self, text: str) -> str:
+        raw = f"{self.namespace}\0{text}".encode()
+        return hashlib.sha256(raw).hexdigest()[:32]
+
+    def get(self, text: str) -> str | None:
+        if self._conn is None:
+            return None
+        try:
+            row = self._conn.execute(
+                "SELECT value FROM entry WHERE key = ?", (self._key(text),)
+            ).fetchone()
+        except sqlite3.Error:
+            return None
+        return row[0] if row else None
+
+    def put(self, text: str, value: str) -> None:
+        if self._conn is None:
+            return
+        try:
+            self._conn.execute(
+                "INSERT OR REPLACE INTO entry VALUES (?, ?)",
+                (self._key(text), value),
+            )
+        except sqlite3.Error:
+            pass
+
+    def commit(self) -> None:
+        if self._conn is None:
+            return
+        try:
+            self._conn.commit()
+        except sqlite3.Error:
+            pass
+
+    def close(self) -> None:
+        if self._conn is None:
+            return
+        try:
+            self._conn.commit()
+            self._conn.close()
+        except sqlite3.Error:
+            pass
+        finally:
+            self._conn = None
+
+    def __enter__(self) -> "Cache":
+        return self
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        tb: TracebackType | None,
+    ) -> None:
+        self.close()
