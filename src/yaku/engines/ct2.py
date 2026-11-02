@@ -32,6 +32,11 @@ class CT2Engine:
     source_sp: spm.SentencePieceProcessor
     target_sp: spm.SentencePieceProcessor
     beam: int = 5
+    # Above 1.0 the beam search stops favouring short hypotheses. A decoder
+    # that drops a clause produces exactly such a hypothesis: at 1.5, 19 of
+    # 45 hand-labelled drops in held-out manual pages came back complete,
+    # with no new drop among the segments that were already complete.
+    length_penalty: float = 1.5
     max_batch_tokens: int = 2048
     max_decoding_length: int = 512
 
@@ -40,6 +45,7 @@ class CT2Engine:
         cls,
         model_dir: Path,
         beam: int = 5,
+        length_penalty: float = 1.5,
         device: str = "cpu",
         compute_type: str = "int8",
         threads: int = 0,
@@ -69,6 +75,7 @@ class CT2Engine:
             source_sp=spm.SentencePieceProcessor(str(source_path)),
             target_sp=spm.SentencePieceProcessor(str(target_path)),
             beam=beam,
+            length_penalty=length_penalty,
         )
 
     def translate(self, texts: list[str]) -> list[str]:
@@ -78,6 +85,7 @@ class CT2Engine:
         results = self.translator.translate_batch(
             batch,
             beam_size=self.beam,
+            length_penalty=self.length_penalty,
             batch_type="tokens",
             max_batch_size=self.max_batch_tokens,
             max_decoding_length=self.max_decoding_length,

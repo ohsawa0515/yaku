@@ -37,6 +37,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--beam", type=int, default=5, help="beam width (default: 5)")
     parser.add_argument(
+        "--length-penalty",
+        type=float,
+        default=1.5,
+        help="above 1 favours complete translations over short ones (default: 1.5)",
+    )
+    parser.add_argument(
         "--fallback",
         default="both",
         choices=["both", "original", "mark"],
@@ -142,6 +148,7 @@ def main(argv: list[str] | None = None) -> int:
         engine = CT2Engine.load(
             model_dir,
             beam=args.beam,
+            length_penalty=args.length_penalty,
             device=args.device,
             compute_type=args.compute_type,
             threads=args.threads,
@@ -152,7 +159,7 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     active = ",".join(sorted(rule.name for rule in rules if rule.enabled))
-    namespace = f"{target.model_name}:{args.beam}:{active}"
+    namespace = f"{target.model_name}:{args.beam}:{args.length_penalty}:{active}"
     cache_path = None if args.no_cache else paths.cache_path()
 
     with Cache(cache_path, namespace) as cache:
