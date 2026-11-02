@@ -150,3 +150,23 @@ def test_list_numbers_and_ellipses_do_not_end_a_lowercase_sentence(english):
         "the shell and pshell commands (! and #)",
     ]:
         assert split_sentences(text, english) == [text], text
+
+
+def test_split_gutter_takes_a_log_timestamp_and_the_frame():
+    from yaku.text import split_gutter
+
+    assert split_gutter("13:17:22  │ Error: x") == ("13:17:22  │ ", "Error: x")
+    assert split_gutter("13:17:22  aws_s3_bucket.a: Creating...") == (
+        "13:17:22  ",
+        "aws_s3_bucket.a: Creating...",
+    )
+    assert split_gutter("2026-02-12T10:49:20.591-0600 [ERROR] vertex") == (
+        "2026-02-12T10:49:20.591-0600 ",
+        "[ERROR] vertex",
+    )
+
+
+def test_a_number_that_is_not_a_time_is_not_a_prefix():
+    from yaku.text import split_gutter
+
+    assert split_gutter("15:   content = x") == ("", "15:   content = x")

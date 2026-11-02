@@ -39,3 +39,9 @@ pattern = '^\s*(?:Acquiring|Releasing) state lock'
 [[passthrough]]
 name    = "diagnostic-source"
 pattern = '^\s{2,}\d+:\s+\S'
+
+# The resource a diagnostic is about: "  with aws_s3_bucket.ceph,". It ends
+# in a comma, so without this it would be joined to the "on main.tf ..." line.
+[[passthrough]]
+name    = "diagnostic-with"
+pattern = '^\s*with (?:(?:module|data)\.[\w\-]+\.)*[\w\-]+\.[\w\-\[\]"\.]+,\s*$'

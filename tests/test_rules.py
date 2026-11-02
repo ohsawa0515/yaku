@@ -165,3 +165,12 @@ def test_describe_mounts_and_taints_pass_through(passthrough):
 def test_tree_output_passes_through(passthrough):
     for line in ["├── src", "│   └── yaku", "└── README.md"]:
         assert is_passthrough(line, passthrough), line
+
+
+def test_diagnostic_subject_line_passes_through(passthrough):
+    for line in [
+        "│   with aws_s3_bucket.ceph,".removeprefix("│"),
+        "  with module.net.aws_subnet.private[0],",
+    ]:
+        assert is_passthrough(line, passthrough), line
+    assert not is_passthrough("  with the archive open, list its contents,", passthrough)

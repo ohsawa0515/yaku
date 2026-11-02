@@ -11,11 +11,16 @@ ANSI = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
 
 _INDENT = re.compile(r"^(\s*)(.*?)(\s*)$", re.DOTALL)
 
-# The vertical rule that frames every line of a diagnostic, as terraform
-# prints when colour is on: "│ Error: ...". It is layout, like indentation.
-# Only a rule in the first column is a frame; an indented one is part of the
-# content, such as the expression values inside a diagnostic.
-_GUTTER = re.compile(r"^[│┃] ?")
+# What a log adds in front of every line: a timestamp, as CI systems print,
+# then the vertical rule that frames a terraform diagnostic when colour is
+# on ("13:17:22  │ Error: ..."). Both are layout, like indentation. Only a
+# rule right at the start of the line is a frame; an indented one is part of
+# the content, such as the expression values inside a diagnostic.
+_GUTTER = re.compile(
+    r"^(?:(?:\d{4}-\d{2}-\d{2}[T ])?\d{2}:\d{2}:\d{2}(?:\.\d+)?"
+    r"(?:Z|[+-]\d{2}:?\d{2})?\s+)?"
+    r"(?:[│┃] ?)?"
+)
 
 
 def strip_ansi(text: str) -> str:
@@ -31,9 +36,9 @@ def split_indent(text: str) -> tuple[str, str, str]:
 
 
 def split_gutter(text: str) -> tuple[str, str]:
-    """Split a framing rule off the start of a line."""
+    """Split a log timestamp and a framing rule off the start of a line."""
     m = _GUTTER.match(text)
-    if m is None:
+    if m is None or not m.group(0):
         return "", text
     return m.group(0), text[m.end() :]
 
