@@ -96,3 +96,10 @@ def test_colon_still_splits_inside_a_semicolon_list(english):
         "It works in three steps as follows:",
         "read the file; parse it; and print it.",
     ]
+
+
+def test_split_gutter_takes_the_frame_only():
+    from yaku.text import split_gutter
+    assert split_gutter("│ Error: x") == ("│ ", "Error: x")
+    assert split_gutter("│   15:   content") == ("│ ", "  15:   content")
+    assert split_gutter("plain line") == ("", "plain line")

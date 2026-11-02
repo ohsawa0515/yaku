@@ -15,7 +15,7 @@ from yaku.cache import Cache
 from yaku.classify import is_passthrough, is_translatable, looks_like_command
 from yaku.masking import Masker
 from yaku.quality import judge
-from yaku.text import split_indent, split_sentences, strip_ansi
+from yaku.text import split_gutter, split_indent, split_sentences, strip_ansi
 from yaku.types import OK, Engine, Line, SourceProfile, TargetProfile, Verdict
 
 # Share of translatable lines that do not end in sentence punctuation, above
@@ -87,7 +87,7 @@ class Pipeline:
         """
         total = unfinished = 0
         for raw in raw_lines:
-            _, body, _, ok = self._classify(raw)
+            _, body, _, ok, _ = self._classify(raw)
             if not ok:
                 continue
             total += 1
@@ -97,8 +97,10 @@ class Pipeline:
 
     # -- classification ---------------------------------------------------
 
-    def _classify(self, raw: str) -> tuple[str, str, str, bool]:
-        plain = strip_ansi(raw)
+    def _classify(self, raw: str) -> tuple[str, str, str, bool, str]:
+        """Return indent, body, trailing whitespace, translatability, and the
+        line as the rules see it: without colour and without a frame."""
+        gutter, plain = split_gutter(strip_ansi(raw))
         indent, body, trailing = split_indent(plain)
         # Passthrough rules see the indentation: it is often the only thing
         # that tells a table row or a source excerpt from a sentence.
@@ -107,7 +109,7 @@ class Pipeline:
             and not looks_like_command(body)
             and is_translatable(body, self.source, self.target)
         )
-        return indent, body, trailing, translatable
+        return gutter + indent, body, trailing, translatable, plain
 
     def _is_fragment(
         self, line: str, body: str, pending: list[_Pending]
@@ -183,8 +185,7 @@ class Pipeline:
             pending.clear()
 
         for raw in raw_lines:
-            plain = strip_ansi(raw)
-            indent, body, trailing, translatable = self._classify(raw)
+            indent, body, trailing, translatable, plain = self._classify(raw)
             current = _Pending(raw, plain, indent, body, trailing)
             wraps = bool(pending) and self._wraps_into(pending[-1], body, width)
 

@@ -11,6 +11,10 @@ ANSI = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
 
 _INDENT = re.compile(r"^(\s*)(.*?)(\s*)$", re.DOTALL)
 
+# The vertical rule that frames every line of a diagnostic, as terraform
+# prints when colour is on: "│ Error: ...". It is layout, like indentation.
+_GUTTER = re.compile(r"^\s*[│┃]\s?")
+
 
 def strip_ansi(text: str) -> str:
     return ANSI.sub("", text)
@@ -22,6 +26,14 @@ def split_indent(text: str) -> tuple[str, str, str]:
     if m is None:  # unreachable: the pattern accepts any string
         return "", text, ""
     return m.group(1), m.group(2), m.group(3)
+
+
+def split_gutter(text: str) -> tuple[str, str]:
+    """Split a framing rule off the start of a line."""
+    m = _GUTTER.match(text)
+    if m is None:
+        return "", text
+    return m.group(0), text[m.end():]
 
 
 def split_sentences(text: str, source: SourceProfile) -> list[str]:

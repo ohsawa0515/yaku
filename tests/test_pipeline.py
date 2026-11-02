@@ -144,3 +144,24 @@ def test_cache_never_serves_a_different_number(make, tmp_path):
     second.run(lines)
     assert second.engine.calls, "must translate, not reuse the cached entry"
     assert second.render(lines[0]) == ["Plan: 4 to add, 0 to change, 0 to destroy."]
+
+
+def test_framed_diagnostic_is_translated_inside_the_frame(make):
+    raw = [
+        "\x1b[31m╷\x1b[0m",
+        "\x1b[31m│\x1b[0m \x1b[1mError: Reference to undeclared local value\x1b[0m",
+        "\x1b[31m│\x1b[0m   on main.tf line 15, in resource \"local_file\" \"a\":",
+        "\x1b[31m│\x1b[0m   15:   content  = local.missing_value",
+        "\x1b[31m│\x1b[0m     \x1b[90m│\x1b[0m var.env is \"qa\"",
+        "\x1b[31m│\x1b[0m A local value with the name \"missing_value\" has not been declared.",
+        "\x1b[31m╵\x1b[0m",
+    ]
+    pipeline = make(join=False)
+    lines = pipeline.prepare(raw)
+    translated = [line.body for line in lines if line.translatable]
+    assert "Error: Reference to undeclared local value" in translated
+    assert any(body.startswith("A local value with the name") for body in translated)
+    assert not any("15:" in body or "var.env is" in body for body in translated)
+    pipeline.run(lines)
+    last = [line for line in lines if line.translatable][-1]
+    assert pipeline.render(last)[0].startswith("│ ")
