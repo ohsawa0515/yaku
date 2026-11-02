@@ -56,10 +56,13 @@ name    = "FLAG"
 order   = 130
 pattern = '(?<![\w\-])--?[a-zA-Z][\w\-]*'
 
+# A hex run surrounded by hyphens is one segment of a longer name, such as a
+# pod suffix. Taking it on its own leaves the rest of the name exposed, and
+# the later identifier rule can no longer match across the placeholder.
 [[rule]]
 name    = "HASH"
 order   = 140
-pattern = '\b[0-9a-f]{7,40}\b'
+pattern = '(?<![\w\-])[0-9a-f]{7,40}(?![\w\-])'
 
 [[rule]]
 name    = "ENVVAR"

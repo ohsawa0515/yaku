@@ -68,3 +68,19 @@ def test_progress_rule_ignores_prose(passthrough):
 def test_progress_rule_matches_a_resource_address(passthrough):
     assert is_passthrough("aws_instance.web: Refreshing state...", passthrough)
     assert is_passthrough("module.vpc.aws_subnet.private: Creating...", passthrough)
+
+
+def test_hyphenated_name_is_masked_whole(mask_rules, japanese):
+    """A hex segment inside a longer name must not be taken on its own: the
+    identifier rule cannot match across a placeholder, so the rest of the
+    name would reach the model unprotected."""
+    masker = Masker(rules=mask_rules, target=japanese)
+    masked, values = masker.mask("The pod payment-worker-7d9f8b6c5-xk2lp is pending.")
+    assert "payment-worker-7d9f8b6c5-xk2lp" in values
+    assert "payment-worker" not in masked
+
+
+def test_standalone_hash_is_still_masked(mask_rules, japanese):
+    masker = Masker(rules=mask_rules, target=japanese)
+    _, values = masker.mask("Commit 9f8b6c5a1d2e3f4 was reverted.")
+    assert "9f8b6c5a1d2e3f4" in values
