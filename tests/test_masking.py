@@ -90,3 +90,38 @@ def test_template_collapses_literal_numbers(masker):
 
 def test_template_keeps_placeholder_numbers_distinct(masker):
     assert masker.template("pod T1 restarted") != masker.template("pod T2 restarted")
+
+
+def test_word_fused_placeholder_counts_as_lost(mask_rules, japanese):
+    """A decoder that emits "T1stdout" kept the characters and lost the value."""
+    masker = Masker(rules=mask_rules, target=japanese)
+    assert masker.lost("T1stdout.t1 アーカイブの内容", 1) == 1
+
+
+def test_lower_cased_placeholder_counts_as_lost(mask_rules, japanese):
+    masker = Masker(rules=mask_rules, target=japanese)
+    assert masker.lost("t1 が作成されます", 1) == 1
+
+
+def test_word_fused_placeholder_counts_as_residue(mask_rules, japanese):
+    masker = Masker(rules=mask_rules, target=japanese)
+    assert masker.residue("T1stdout.t1 アーカイブの内容", 1) == 2
+
+
+def test_intact_placeholder_is_neither_lost_nor_residue(mask_rules, japanese):
+    masker = Masker(rules=mask_rules, target=japanese)
+    assert masker.lost("T1 が作成されます", 1) == 0
+    assert masker.residue("T1 が作成されます", 1) == 0
+
+
+def test_placeholder_between_japanese_characters_survives(mask_rules, japanese):
+    """Python treats Japanese characters as word characters, so a word
+    boundary around a placeholder would never match in a Japanese result."""
+    masker = Masker(rules=mask_rules, target=japanese)
+    assert masker.lost("詳細はT1を参照。", 1) == 0
+    assert masker.residue("詳細はT1を参照。", 1) == 0
+
+
+def test_several_placeholders_in_japanese_text_survive(mask_rules, japanese):
+    masker = Masker(rules=mask_rules, target=japanese)
+    assert masker.lost("T1、T2、またはT3モードでは", 3) == 0

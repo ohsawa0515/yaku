@@ -132,6 +132,7 @@ def load_target(lang: str, dirs: Sequence[Path] | None = None) -> TargetProfile:
             quote_chars=data["quote_chars"],
             placeholder_fmt=data["placeholder_fmt"],
             placeholder_pattern=_compile(data["placeholder_pattern"], where),
+            placeholder_loose=_compile(data["placeholder_loose"], where),
         )
     except KeyError as exc:
         raise RuleError(f"{where} is missing key {exc}") from exc

@@ -63,25 +63,30 @@ class Masker:
         return restored
 
     def lost(self, text: str, count: int) -> int:
-        """Placeholders the decoder dropped.
+        """Placeholders that did not survive as standalone tokens.
 
         A placeholder vanishes when the clause around it was not translated,
-        which no other check detects.
+        which no other check detects. A substring test is not enough: a
+        decoder that emits "T1stdout" has kept the characters and lost the
+        value, so only a whole-token match counts as restored.
         """
-        return sum(
-            1 for i in range(1, count + 1) if self.target.placeholder(i) not in text
-        )
+        intact = {n for n in self.target.placeholder_pattern.findall(text)}
+        return sum(1 for i in range(1, count + 1) if str(i) not in intact)
 
     def residue(self, text: str, count: int) -> int:
-        """Placeholders the decoder invented, duplicated or lower-cased."""
+        """Placeholder-like text that cannot be restored.
 
-        seen = Counter(self.target.placeholder_pattern.findall(text))
+        Counts numbers that were never issued, repeats of one that was, and
+        damaged forms such as a lower-cased or word-fused placeholder.
+        """
+        intact = Counter(self.target.placeholder_pattern.findall(text))
+        every = Counter(self.target.placeholder_loose.findall(text))
         extra = 0
-        for number, times in seen.items():
+        for number, times in every.items():
             if not 1 <= int(number) <= count:
-                extra += times  # a number that was never issued
-            elif times > 1:
-                extra += times - 1  # the same placeholder emitted twice
+                extra += times
+            else:
+                extra += times - min(intact[number], 1)
         return extra
 
     def template(self, masked: str) -> str:

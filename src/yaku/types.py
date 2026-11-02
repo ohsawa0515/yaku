@@ -56,6 +56,7 @@ class TargetProfile:
     quote_chars: str
     placeholder_fmt: str
     placeholder_pattern: re.Pattern[str]
+    placeholder_loose: re.Pattern[str]
 
     def placeholder(self, index: int) -> str:
         return self.placeholder_fmt % index

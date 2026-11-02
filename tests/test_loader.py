@@ -71,7 +71,8 @@ def test_a_later_directory_overrides_one_profile_value(tmp_path):
         "target/ja.toml",
         'lang="ja"\nmodel_name="m"\nmin_ratio=0.35\nmax_ratio=2.5\n'
         "already_translated='a'\nquote_chars=\"'\"\n"
-        "placeholder_fmt=\"T%d\"\nplaceholder_pattern='T(\\d+)'\n",
+        "placeholder_fmt=\"T%d\"\nplaceholder_pattern='T(\\d+)'\n"
+        "placeholder_loose='(?i)T(\\d+)'\n",
     )
     write(over, "target/ja.toml", "min_ratio=0.30\n")
     profile = load_target("ja", [base, over])
