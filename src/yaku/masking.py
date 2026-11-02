@@ -14,6 +14,13 @@ from dataclasses import dataclass, field
 from yaku.types import MaskRule, TargetProfile
 
 
+_CLOSING = ".,;:"
+
+
+def _at_break(text: str, end: int) -> bool:
+    return end == len(text) or text[end].isspace()
+
+
 def _glued(text: str, start: int, end: int) -> bool:
     before = text[start - 1] if start > 0 else ""
     after = text[end] if end < len(text) else ""
@@ -50,8 +57,14 @@ class Masker:
             # check could not be trusted. Leave such spans in place.
             if _glued(m.string, m.start(), m.end()):
                 return span
+            # Punctuation that ends a sentence or clause belongs to the
+            # sentence, not to the path or URL before it. Masking it would
+            # hide the boundary from the sentence splitter.
+            tail = ""
+            if len(span) > 1 and span[-1] in _CLOSING and _at_break(m.string, m.end()):
+                span, tail = span[:-1], span[-1]
             values.append(span)
-            return self.target.placeholder(len(values))
+            return self.target.placeholder(len(values)) + tail
 
         masked = text
         for rule in self._active:

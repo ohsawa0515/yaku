@@ -141,3 +141,16 @@ def test_every_placeholder_in_masked_text_stands_alone(mask_rules, japanese):
         masked, values = masker.mask(text)
         assert masker.lost(masked, len(values)) == 0, masked
         assert masker.residue(masked, len(values)) == 0, masked
+
+
+def test_sentence_final_period_stays_outside_the_placeholder(mask_rules, japanese):
+    masker = Masker(rules=mask_rules, target=japanese)
+    masked, values = masker.mask("Set core.hooksPath to /dev/null. This disables hooks.")
+    assert "/dev/null" in values
+    assert "T1. This" in masked or ". This" in masked
+
+
+def test_url_does_not_take_the_trailing_comma(mask_rules, japanese):
+    masker = Masker(rules=mask_rules, target=japanese)
+    masked, values = masker.mask("See https://example.com/docs, then continue.")
+    assert "https://example.com/docs" in values
