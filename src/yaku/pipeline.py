@@ -20,7 +20,9 @@ from yaku.types import OK, Engine, Line, SourceProfile, TargetProfile, Verdict
 
 # Share of translatable lines that do not end in sentence punctuation, above
 # which the input is treated as wrapped prose rather than one record per line.
-WRAP_THRESHOLD = 0.35
+# Measured at 0.61-0.77 for manual pages, command help and pasted articles,
+# and 0.00-0.29 for terraform plan and kubectl table output.
+WRAP_THRESHOLD = 0.45
 
 # A continuation fragment is short by nature. Anything longer is a line of its
 # own that simply lacks final punctuation.
