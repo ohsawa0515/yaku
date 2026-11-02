@@ -13,10 +13,6 @@ from dataclasses import dataclass, field
 
 from yaku.types import MaskRule, TargetProfile
 
-# Literal numbers vary between otherwise identical lines. Placeholder numbers
-# do not: they say which value goes back where.
-_NUMBER = re.compile(r"(?<![A-Za-z])\d+")
-
 
 def _glued(text: str, start: int, end: int) -> bool:
     before = text[start - 1] if start > 0 else ""
@@ -101,11 +97,3 @@ class Masker:
             else:
                 extra += times - min(intact[number], 1)
         return extra
-
-    def template(self, masked: str) -> str:
-        """Cache key for a masked line.
-
-        Log output repeats the same sentence with different numbers, so collapsing literal numbers raises the hit rate.
-        The lookbehind spares placeholder numbers, which decide which value is restored where.
-        """
-        return _NUMBER.sub("#", masked)

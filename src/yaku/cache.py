@@ -1,8 +1,11 @@
-"""A translation cache keyed on the normalised masked text.
+"""A translation cache keyed on the exact masked text.
 
-Command output repeats the same sentence many times with different values, so
-a cache turns most of a large input into lookups. Every failure here is
-swallowed: a missing cache must never stop a translation.
+Masking already folds identifiers into placeholders, so repeated sentences
+about different resources share an entry. Literal numbers are deliberately
+not folded: the stored value is a translation of one specific sentence, and
+serving it for "4 to add" when it was produced for "1 to add" would print
+the wrong number. Every failure here is swallowed: a missing cache must
+never stop a translation.
 """
 
 from __future__ import annotations

@@ -84,12 +84,6 @@ def test_residue_counts_numbers_never_issued(masker):
     assert masker.residue("T1 と T9", 2) == 1
 
 
-def test_template_collapses_literal_numbers(masker):
-    assert masker.template("pod T1 has 5 restarts") == "pod T1 has # restarts"
-
-
-def test_template_keeps_placeholder_numbers_distinct(masker):
-    assert masker.template("pod T1 restarted") != masker.template("pod T2 restarted")
 
 
 def test_word_fused_placeholder_counts_as_lost(mask_rules, japanese):

@@ -195,7 +195,7 @@ class Pipeline:
             self.stats.translated += 1
             line.segment_results = [""] * len(line.segments)
             for index, segment in enumerate(line.segments):
-                hit = self.cache.get(self.masker.template(segment))
+                hit = self.cache.get(segment)
                 if hit is not None:
                     line.segment_results[index] = hit
                     self.stats.cached += 1
@@ -207,7 +207,7 @@ class Pipeline:
             outputs = self.engine.translate([p[2] for p in pending])
             for (line, index, segment), output in zip(pending, outputs):
                 line.segment_results[index] = output
-                self.cache.put(self.masker.template(segment), output)
+                self.cache.put(segment, output)
             self.cache.commit()
 
         for line in lines:
