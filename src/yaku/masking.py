@@ -18,6 +18,14 @@ from yaku.types import MaskRule, TargetProfile
 _NUMBER = re.compile(r"(?<![A-Za-z])\d+")
 
 
+def _glued(text: str, start: int, end: int) -> bool:
+    before = text[start - 1] if start > 0 else ""
+    after = text[end] if end < len(text) else ""
+    return (before.isascii() and before.isalnum()) or (
+        after.isascii() and after.isalnum()
+    )
+
+
 @dataclass
 class Masker:
     """Applies mask rules in a fixed order and restores the values afterwards."""
@@ -40,6 +48,11 @@ class Masker:
             # A span holding a placeholder was produced by an earlier rule.
             # Masking it again would bury one number inside another.
             if self.target.placeholder_pattern.search(span):
+                return span
+            # A placeholder glued to a letter or digit ("T1hostname") is
+            # indistinguishable from one the decoder damaged, so the loss
+            # check could not be trusted. Leave such spans in place.
+            if _glued(m.string, m.start(), m.end()):
                 return span
             values.append(span)
             return self.target.placeholder(len(values))

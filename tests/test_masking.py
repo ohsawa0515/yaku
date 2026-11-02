@@ -125,3 +125,25 @@ def test_placeholder_between_japanese_characters_survives(mask_rules, japanese):
 def test_several_placeholders_in_japanese_text_survive(mask_rules, japanese):
     masker = Masker(rules=mask_rules, target=japanese)
     assert masker.lost("T1、T2、またはT3モードでは", 3) == 0
+
+
+def test_span_glued_to_a_word_is_not_masked(mask_rules, japanese):
+    """Masking "[user@]" in "[user@]hostname" would produce "T1hostname",
+    which the loss check cannot tell apart from a damaged placeholder."""
+    masker = Masker(rules=mask_rules, target=japanese)
+    masked, values = masker.mask("Connect to [user@]hostname over the network.")
+    assert "[user@]" not in values
+    assert "[user@]hostname" in masked
+
+
+def test_every_placeholder_in_masked_text_stands_alone(mask_rules, japanese):
+    masker = Masker(rules=mask_rules, target=japanese)
+    samples = [
+        "ssh -L [bind_address:]port:host:hostport destination",
+        "-w local_tun[:remote_tun] Requests tunnel device forwarding.",
+        "Use ssh://[user@]hostname[:port] as the destination.",
+    ]
+    for text in samples:
+        masked, values = masker.mask(text)
+        assert masker.lost(masked, len(values)) == 0, masked
+        assert masker.residue(masked, len(values)) == 0, masked
