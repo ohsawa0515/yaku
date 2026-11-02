@@ -32,7 +32,20 @@ MAX_FRAGMENT = 60
 # request long enough for the decoder to drop clauses from it.
 MAX_JOINED_LINES = 12
 
+# A line at least this share of the widest line was filled to the wrap
+# column. Only consulted when the input as a whole is not joined.
+WRAPPED_LINE_SHARE = 0.85
+
 _SPACES = re.compile(r"\s{2,}")
+
+
+@dataclass(frozen=True)
+class _Pending:
+    raw: str
+    plain: str
+    indent: str
+    body: str
+    trailing: str
 
 
 @dataclass
@@ -85,15 +98,20 @@ class Pipeline:
     # -- classification ---------------------------------------------------
 
     def _classify(self, raw: str) -> tuple[str, str, str, bool]:
-        indent, body, trailing = split_indent(strip_ansi(raw))
+        plain = strip_ansi(raw)
+        indent, body, trailing = split_indent(plain)
+        # Passthrough rules see the indentation: it is often the only thing
+        # that tells a table row or a source excerpt from a sentence.
         translatable = (
-            not is_passthrough(body, self.passthrough)
+            not is_passthrough(plain, self.passthrough)
             and not looks_like_command(body)
             and is_translatable(body, self.source, self.target)
         )
         return indent, body, trailing, translatable
 
-    def _is_fragment(self, body: str, pending: list[tuple[str, str, str]]) -> bool:
+    def _is_fragment(
+        self, line: str, body: str, pending: list[_Pending]
+    ) -> bool:
         """Whether a rejected line continues the sentence above it.
 
         A wrapped sentence can end in a fragment of one or two words, which
@@ -104,10 +122,38 @@ class Pipeline:
             bool(pending)
             and bool(body.strip())
             and len(body) <= MAX_FRAGMENT
-            and not self.source.sentence_end.search(pending[-1][2])
-            and not is_passthrough(body, self.passthrough)
+            and not self.source.sentence_end.search(pending[-1].body)
+            and not is_passthrough(line, self.passthrough)
             and not looks_like_command(body)
             and bool(self.source.letter.search(body))
+        )
+
+    def _wraps_into(self, previous: _Pending, body: str, width: int) -> bool:
+        """Whether a line is visibly the continuation of the one above.
+
+        Used when the input as a whole is not joined. Output that is mostly
+        one record per line still contains wrapped paragraphs, such as the
+        explanation under a terraform error. A line filled almost to the
+        wrap column, left unfinished, and followed by a line that does not
+        start a new sentence was wrapped, not ended.
+        """
+        return (
+            width > 0
+            and not self.source.sentence_end.search(previous.body)
+            and len(previous.plain.rstrip()) >= WRAPPED_LINE_SHARE * width
+            and bool(body)
+            and not body[0].isupper()
+        )
+
+    def _wrap_width(self, raw_lines: Sequence[str]) -> int:
+        """Estimate the column the input was wrapped at."""
+        return max(
+            (
+                len(strip_ansi(raw).rstrip())
+                for raw in raw_lines
+                if self._classify(raw)[3]
+            ),
+            default=0,
         )
 
     def prepare(self, raw_lines: Sequence[str]) -> list[Line]:
@@ -116,18 +162,20 @@ class Pipeline:
             self.stats.wrap_ratio = ratio
             self.join = ratio >= WRAP_THRESHOLD
         self.stats.joined = self.join
+        width = 0 if self.join else self._wrap_width(raw_lines)
 
         out: list[Line] = []
-        pending: list[tuple[str, str, str]] = []
+        pending: list[_Pending] = []
 
         def flush() -> None:
             if not pending:
                 return
-            body = _SPACES.sub(" ", " ".join(p[2] for p in pending)).strip()
+            body = _SPACES.sub(" ", " ".join(p.body for p in pending)).strip()
             line = Line(
-                raws=[p[0] for p in pending],
-                indent=pending[0][1],
+                raws=[p.raw for p in pending],
+                indent=pending[0].indent,
                 body=body,
+                trailing=pending[0].trailing if len(pending) == 1 else "",
                 translatable=True,
             )
             self._attach(line, body)
@@ -135,13 +183,15 @@ class Pipeline:
             pending.clear()
 
         for raw in raw_lines:
+            plain = strip_ansi(raw)
             indent, body, trailing, translatable = self._classify(raw)
-
-            if self.join and not translatable and self._is_fragment(body, pending):
-                pending.append((raw, indent, body))
-                continue
+            current = _Pending(raw, plain, indent, body, trailing)
+            wraps = bool(pending) and self._wraps_into(pending[-1], body, width)
 
             if not translatable:
+                if (self.join or wraps) and self._is_fragment(plain, body, pending):
+                    pending.append(current)
+                    continue
                 flush()
                 out.append(
                     Line(
@@ -154,28 +204,19 @@ class Pipeline:
                 )
                 continue
 
-            if not self.join:
-                line = Line(
-                    raws=[raw],
-                    indent=indent,
-                    body=body,
-                    trailing=trailing,
-                    translatable=True,
-                )
-                self._attach(line, body)
-                out.append(line)
-                continue
-
-            # A continuation line is often indented more deeply than the line
-            # that starts the sentence, so indentation only ends a paragraph
-            # once the previous line also finished a sentence.
             if pending:
-                finished = bool(self.source.sentence_end.search(pending[-1][2]))
-                if (finished and pending[0][1] != indent) or len(
-                    pending
-                ) >= MAX_JOINED_LINES:
+                if len(pending) >= MAX_JOINED_LINES:
                     flush()
-            pending.append((raw, indent, body))
+                elif self.join:
+                    # A continuation line is often indented more deeply than
+                    # the line that starts the sentence, so indentation only
+                    # ends a paragraph once the previous line also finished.
+                    finished = bool(self.source.sentence_end.search(pending[-1].body))
+                    if finished and pending[0].indent != indent:
+                        flush()
+                elif not wraps:
+                    flush()
+            pending.append(current)
 
         flush()
         self.stats.lines = len(out)
