@@ -3,12 +3,13 @@ model_name          = "fugumt-en-ja"
 model_repo          = "staka/fugumt-en-ja"
 model_revision      = "fbb91252110cf97d90291eb808629ab0b10f7928"
 model_license       = "CC BY-SA 4.0"
-# Measured on 8,315 segments from 12 manual pages not used while designing
-# the rules, 194 of them labelled by hand. Below 0.35, 30% of segments had
-# dropped a clause; from 0.35 to 0.40, none of 40 had. Flagging under 0.35
-# is right if a missed drop costs 2.3 to 10 times a false flag. At this
-# value 33% of flagged segments really dropped text (95%: 23-44%), and 4.1%
-# of all segments are flagged by the ratio alone.
+# Measured with length_penalty 1.5 on 8,315 segments from 12 manual pages not
+# used while designing the rules, 134 of them labelled by hand. Below 0.35,
+# 30% of segments had dropped a clause; from 0.35 up, 1 of 60 had. Flagging
+# under 0.35 is right if a missed drop costs 2.3 to 10 times a false flag. At
+# this value 31% of flagged segments really dropped text (95%: 19-44%), the
+# check catches about 80% of the drops in the sampled band, and 3.1% of all
+# segments are flagged by the ratio alone.
 min_ratio           = 0.35
 max_ratio           = 2.5
 
