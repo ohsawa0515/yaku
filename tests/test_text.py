@@ -45,3 +45,25 @@ def test_split_sentences_cuts_at_a_comma_when_too_long(english):
 
 def test_split_sentences_never_returns_an_empty_list(english):
     assert split_sentences("", english) == [""]
+
+
+def test_long_lead_in_is_split_off(english):
+    text = "Keyboard-interactive authentication works as follows: The server sends a prompt."
+    assert split_sentences(text, english) == [
+        "Keyboard-interactive authentication works as follows:",
+        "The server sends a prompt.",
+    ]
+
+
+def test_short_label_stays_with_its_value(english):
+    for text in [
+        "Plan: 4 to add, 0 to change, 0 to destroy.",
+        "Error: Invalid value for variable",
+        "Recommended: Less than 432000 seconds.",
+    ]:
+        assert split_sentences(text, english) == [text]
+
+
+def test_colon_without_space_is_not_a_split_point(english):
+    text = "This was checked by the validation rule at main.tf:8,3-13."
+    assert split_sentences(text, english) == [text]

@@ -37,6 +37,11 @@ class SourceProfile:
     sentence_end: re.Pattern[str]
     sentence_split: re.Pattern[str]
     max_segment_chars: int
+    # A lead-in such as "... works as follows:" is split off from what it
+    # introduces, but only when it has clause_min_words words: a one-word
+    # label like "Plan:" or "Error:" must stay with its value.
+    clause_split: re.Pattern[str] | None = None
+    clause_min_words: int = 0
 
 
 @dataclass(frozen=True)

@@ -35,7 +35,25 @@ def split_sentences(text: str, source: SourceProfile) -> list[str]:
     parts = [p.strip() for p in source.sentence_split.split(text) if p.strip()]
     out: list[str] = []
     for part in parts:
-        out.extend(_cut(part, source.max_segment_chars))
+        for clause in _split_lead_in(part, source):
+            out.extend(_cut(clause, source.max_segment_chars))
+    return out or [text]
+
+
+def _split_lead_in(text: str, source: SourceProfile) -> list[str]:
+    """Separate long lead-ins ending in a colon from what follows them."""
+    if source.clause_split is None:
+        return [text]
+    out: list[str] = []
+    start = 0
+    for m in source.clause_split.finditer(text):
+        head = text[start : m.start() + 1]
+        if len(source.word.findall(head)) >= source.clause_min_words:
+            out.append(head.strip())
+            start = m.end()
+    tail = text[start:].strip()
+    if tail:
+        out.append(tail)
     return out or [text]
 
 

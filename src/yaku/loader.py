@@ -114,6 +114,10 @@ def load_source(lang: str, dirs: Sequence[Path] | None = None) -> SourceProfile:
             sentence_end=_compile(data["sentence_end"], where),
             sentence_split=_compile(data["sentence_split"], where),
             max_segment_chars=data["max_segment_chars"],
+            clause_split=_compile(data["clause_split"], where)
+            if "clause_split" in data
+            else None,
+            clause_min_words=data.get("clause_min_words", 0),
         )
     except KeyError as exc:
         raise RuleError(f"{where} is missing key {exc}") from exc
