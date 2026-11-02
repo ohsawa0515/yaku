@@ -162,3 +162,20 @@ def test_path_with_a_data_file_stays_whole(mask_rules, japanese):
     masker = Masker(rules=mask_rules, target=japanese)
     _, values = masker.mask("It reads /usr/share/app/data.json at start-up.")
     assert "/usr/share/app/data.json" in values
+
+
+def test_failed_syscall_target_is_masked_whole(mask_rules, japanese):
+    """'locked' came back as 'lock' when the relative directory reached the model."""
+    masker = Masker(rules=mask_rules, target=japanese)
+    masked, values = masker.mask("Original Error: mkdir locked/sub: permission denied")
+    assert values == ["mkdir locked/sub"]
+    assert "locked" not in masked
+
+
+def test_syscall_rule_ignores_prose(mask_rules, japanese):
+    masker = Masker(rules=mask_rules, target=japanese)
+    for text in [
+        "To open the file: choose Save from the menu.",
+        "You can rename and/or remove entries: see below.",
+    ]:
+        assert masker.mask(text)[1] == [], text

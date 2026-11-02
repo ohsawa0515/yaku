@@ -39,6 +39,16 @@ name    = "RELPATH"
 order   = 34
 pattern = '(?:\./)?(?:[\w.\-]+/)+[\w.\-]+\.\w{1,6}\b'
 
+# The target of a failed system call, as Go and many tools print it:
+# "mkdir locked/sub: permission denied". A relative directory has no
+# extension, so the path rules above do not see it, and the decoder rewrites
+# it ("locked" came back as "lock"). Only a name containing a slash, right
+# before the colon that ends the call, is taken; the verb goes with it.
+[[rule]]
+name    = "SYSCALL"
+order   = 36
+pattern = '\b(?:mkdir|open|stat|lstat|chdir|rmdir|unlink|chmod|chown|readlink|rename|symlink|remove)\s+[^\s:]*/[^\s:]*(?=:)'
+
 [[rule]]
 name    = "FILE"
 order   = 100
