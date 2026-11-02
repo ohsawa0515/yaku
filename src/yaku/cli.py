@@ -26,6 +26,9 @@ def build_parser() -> argparse.ArgumentParser:
             "  terraform plan 2>&1 | yaku\n"
             "  man tar | col -bx | yaku\n"
             "  yaku --dry-run < output.txt\n"
+            "\n"
+            "first use:\n"
+            "  yaku setup --lang ja   download and convert the model\n"
         ),
     )
     parser.add_argument("--lang", default="ja", help="target language (default: ja)")
@@ -91,8 +94,11 @@ def _names(value: str) -> set[str]:
     return {part.strip() for part in value.split(",") if part.strip()}
 
 
-def main() -> int:
-    args = build_parser().parse_args()
+def main(argv: list[str] | None = None) -> int:
+    argv = sys.argv[1:] if argv is None else argv
+    if argv[:1] == ["setup"]:
+        return _setup(argv[1:])
+    args = build_parser().parse_args(argv)
 
     if args.show_paths:
         show_paths()
@@ -180,6 +186,19 @@ def main() -> int:
             file=sys.stderr,
         )
     return 0
+
+
+def _setup(argv: list[str]) -> int:
+    from yaku import setup
+
+    def target(lang: str):
+        return load_target(lang, paths.rule_dirs())
+
+    try:
+        return setup.main(argv, target)
+    except RuleError as exc:
+        print(f"yaku: {exc}", file=sys.stderr)
+        return 2
 
 
 def _dry_run(raw_lines, masker, source, target, passthrough, args) -> int:

@@ -133,6 +133,9 @@ def load_target(lang: str, dirs: Sequence[Path] | None = None) -> TargetProfile:
             placeholder_fmt=data["placeholder_fmt"],
             placeholder_pattern=_compile(data["placeholder_pattern"], where),
             placeholder_loose=_compile(data["placeholder_loose"], where),
+            model_repo=data.get("model_repo", ""),
+            model_revision=data.get("model_revision", ""),
+            model_license=data.get("model_license", ""),
         )
     except KeyError as exc:
         raise RuleError(f"{where} is missing key {exc}") from exc

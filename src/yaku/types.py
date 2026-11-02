@@ -57,6 +57,11 @@ class TargetProfile:
     placeholder_fmt: str
     placeholder_pattern: re.Pattern[str]
     placeholder_loose: re.Pattern[str]
+    # Where `yaku setup` fetches the model from. Optional, so that a profile
+    # pointing at a locally converted model needs no upstream.
+    model_repo: str = ""
+    model_revision: str = ""
+    model_license: str = ""
 
     def placeholder(self, index: int) -> str:
         return self.placeholder_fmt % index
