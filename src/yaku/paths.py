@@ -34,15 +34,14 @@ def config_dir() -> Path:
 def models_dir() -> Path:
     """Model root.
 
-    A models directory in the working directory wins over the user data
-    directory, so a checkout can be tested without touching installed state.
+    The working directory is never searched. yaku runs as a filter in
+    whatever directory the user happens to be in, and a models directory
+    planted in a cloned repository would otherwise be loaded silently. A
+    checkout points YAKU_MODELS_DIR at its own models instead.
     """
     env = os.environ.get("YAKU_MODELS_DIR")
     if env:
         return Path(env).expanduser()
-    local = Path.cwd() / "models"
-    if local.is_dir():
-        return local
     return data_dir() / "models"
 
 

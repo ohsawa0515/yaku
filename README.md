@@ -35,7 +35,9 @@ not depend on, so the conversion runs in a throwaway environment created by
 once the packages are cached, and nothing but the converted model is kept.
 
 `yaku --show-paths` prints every location yaku uses. A `models/` directory in
-the working directory takes precedence, which is how a checkout is tested.
+the working directory is never used: yaku runs wherever you are, and a model
+shipped inside a repository you are browsing must not be loaded. To test a
+checkout against its own model, set `YAKU_MODELS_DIR=models`.
 
 ## Use
 
@@ -116,6 +118,7 @@ language needs a profile, not just a model.
 
 ```console
 uv sync
+export YAKU_MODELS_DIR=models     # use the checkout's model, not the installed one
 uv run pytest
 uv run ruff check src tests tools && uv run ruff format src tests tools
 uv run tools/measure_wrap.py samples/*.txt
