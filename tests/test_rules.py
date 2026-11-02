@@ -1,4 +1,4 @@
-from yaku.classify import is_passthrough
+from yaku.classify import is_passthrough, looks_like_command
 from yaku.masking import Masker
 
 
@@ -174,3 +174,40 @@ def test_diagnostic_subject_line_passes_through(passthrough):
     ]:
         assert is_passthrough(line, passthrough), line
     assert not is_passthrough("  with the archive open, list its contents,", passthrough)
+
+
+def test_table_rows_with_narrow_or_tabbed_columns_pass_through(passthrough):
+    for line in [
+        "exclude      -             Exclude a file from the transfer",
+        "  1m\t\t    48s\t\t    7\t    {default-scheduler }\t\t\tWarning\t\tFailedScheduling",
+        "  Tue, 03 May 2016 12:43:38 -0700    Tue, 03 May 2016 13:38:54 -0700    25",
+        "Image(s):            ecr.example.com/spark:dev",
+    ]:
+        assert is_passthrough(line, passthrough), line
+
+
+def test_option_description_with_one_gap_is_not_a_table(passthrough):
+    assert not is_passthrough(
+        "     -c      Create a new archive containing the specified items.", passthrough
+    )
+
+
+def test_prompts_and_embedded_scripts_are_commands():
+    for line in [
+        "root@nm:/work-place/kubernetes# kubectl describe pod coredns -n kube-system",
+        "➜  ~ kubectl describe pods test-pod",
+        "% git config set core.filemode true",
+        "if [ ! -f /work/first_run_done ]; then",
+        'echo "First run: creating marker and exiting with 1."',
+        "fi",
+    ]:
+        assert looks_like_command(line), line
+
+
+def test_prose_with_quotes_or_percent_is_not_a_command():
+    for line in [
+        'curl does not parse or otherwise "understand" the content it gets or',
+        'git rebase will stop when "pick" has been replaced with "edit" or when a',
+        "% you just write them as %%. You can output a newline by using",
+    ]:
+        assert not looks_like_command(line), line
