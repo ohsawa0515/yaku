@@ -24,22 +24,15 @@ afterwards. No network access, no API keys, no data leaving the machine.
 
 ```console
 uv tool install yaku      # or: pipx install yaku
+yaku setup --lang ja
 ```
 
-The model is not bundled, because FuguMT is CC BY-SA 4.0. Convert it once:
-
-```console
-uv venv .convert && source .convert/bin/activate
-uv pip install 'transformers<5' torch ctranslate2 sentencepiece
-ct2-transformers-converter --model staka/fugumt-en-ja \
-    --output_dir "$(yaku --show-paths | awk '/^models/{print $2}')/fugumt-en-ja" \
-    --quantization int8 --copy_files source.spm target.spm
-deactivate && rm -rf .convert
-```
-
-Without `--copy_files` the tokeniser files are left out and yaku will not
-start. Do not install `sacremoses`: its normalisation disagrees with reading
-the `.spm` files directly.
+`yaku setup` downloads [FuguMT](https://huggingface.co/staka/fugumt-en-ja) at a
+pinned revision and converts it to a 62 MB int8 model. The model is not
+bundled because it is CC BY-SA 4.0. The converter needs torch, which yaku does
+not depend on, so the conversion runs in a throwaway environment created by
+[uv](https://docs.astral.sh/uv/); uv must be on `PATH`. It takes under a minute
+once the packages are cached, and nothing but the converted model is kept.
 
 `yaku --show-paths` prints every location yaku uses. A `models/` directory in
 the working directory takes precedence, which is how a checkout is tested.
