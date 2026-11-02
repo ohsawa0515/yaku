@@ -9,3 +9,11 @@ pattern = '^\s{2,}\S+\s{2,}\S+\s{2,}\S'
 [[passthrough]]
 name    = "event-row"
 pattern = '^\s*(?:Normal|Warning)\s+\w+\s+\d'
+
+# An example invocation without flags, as in kubectl help:
+#   kubectl describe pods frontend
+# Every word after kubectl starts lowercase, none is a function word, and the
+# line does not end a sentence. Prose about kubectl fails at least one of these.
+[[passthrough]]
+name    = "example-invocation"
+pattern = '^\s*kubectl(?:\s+(?!(?:the|a|an|of|to|is|are|be|and|or|in|on|for|with|that|this|can|will|may|it|by|from|as|when|if|not)\b)[a-z0-9][\w.\-/:=]*)+\s*$'

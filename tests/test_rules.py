@@ -103,3 +103,21 @@ def test_diagnostic_rules_ignore_manual_prose(passthrough):
         "     Version 3 of the format adds support for long names.",
     ]:
         assert not is_passthrough(line, passthrough), line
+
+
+def test_kubectl_example_invocations_pass_through(passthrough):
+    for line in [
+        "  kubectl describe pods",
+        "  kubectl describe pods frontend",
+        "  kubectl describe nodes kubernetes-node-emt8.c.myproject.internal",
+    ]:
+        assert is_passthrough(line, passthrough), line
+
+
+def test_kubectl_example_rule_ignores_prose(passthrough):
+    for line in [
+        "kubectl controls the Kubernetes cluster manager.",
+        "kubectl describe will first check for an exact match",
+        "kubectl uses the current context by default",
+    ]:
+        assert not is_passthrough(line, passthrough), line
