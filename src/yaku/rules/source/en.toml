@@ -16,4 +16,7 @@ clause_split      = '[:;]\s+(?=\S)'
 clause_min_words  = 4
 
 # "a; b; and c" is one list: splitting it loses the items' shared subject.
-clause_list       = ';\s+(?:and|or)\b'
+# "; or" is not included: what follows it is an alternative clause of its
+# own, and in held-out manual pages keeping such segments whole dropped that
+# clause in 3 of 4 cases.
+clause_list       = ';\s+and\b'

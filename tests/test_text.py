@@ -108,3 +108,11 @@ def test_split_gutter_takes_the_frame_only():
 def test_an_indented_rule_is_not_a_frame():
     from yaku.text import split_gutter
     assert split_gutter('    │ var.env is "qa"') == ("", '    │ var.env is "qa"')
+
+
+def test_semicolon_before_or_is_split(english):
+    text = "Set it to skipping to converge faster; or set it to noop to send nothing."
+    assert split_sentences(text, english) == [
+        "Set it to skipping to converge faster;",
+        "or set it to noop to send nothing.",
+    ]
