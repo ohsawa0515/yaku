@@ -103,8 +103,10 @@ original text rather than silently replaced.
   percent of translated lines in manual pages are flagged, of which some are
   real drops and some are Japanese simply being more compact than the ratio
   check allows.
-- Whether lines are joined is decided once for the whole input. A terraform
-  plan whose header paragraph is wrapped will have that paragraph split.
+- Whether lines are joined is decided once for the whole input. Inside
+  record-per-line output, a paragraph is still rejoined when its lines are
+  filled to the wrap column, but a wrap that lands just before a capitalised
+  word is left split.
 - Japanese output sometimes loses a space around a restored identifier.
 
 ## Adding a language
