@@ -116,3 +116,31 @@ def test_semicolon_before_or_is_split(english):
         "Set it to skipping to converge faster;",
         "or set it to noop to send nothing.",
     ]
+
+
+def test_sentence_starting_lowercase_is_split(english):
+    text = "It manages keys for T2. ssh-keygen can create keys for protocol version 2."
+    assert split_sentences(text, english) == [
+        "It manages keys for T2.",
+        "ssh-keygen can create keys for protocol version 2.",
+    ]
+
+
+def test_acronym_ends_a_sentence(english):
+    text = "Entries end with NUL instead of LF. If no format is given, it is implied."
+    assert len(split_sentences(text, english)) == 2
+
+
+def test_abbreviation_before_lowercase_is_not_split(english):
+    for text in ["Use a tool, e.g. tar or cpio, for this.",
+                 "Names, sizes, etc. are listed below.",
+                 "See the manual, cf. section two."]:
+        assert split_sentences(text, english) == [text]
+
+
+def test_list_numbers_and_ellipses_do_not_end_a_lowercase_sentence(english):
+    for text in ["1. have a wonderful idea",
+                 "3. by listing files as arguments to the commit command",
+                 "ssh-keygen -L file ... ssh-keygen -A",
+                 "the shell and pshell commands (! and #)"]:
+        assert split_sentences(text, english) == [text], text
