@@ -1,0 +1,21 @@
+lang                = "ja"
+model_name          = "fugumt-en-ja"
+min_ratio           = 0.35
+max_ratio           = 2.5
+
+# hiragana 3040-309F, katakana 30A0-30FF, CJK ideographs 4E00-9FFF
+already_translated  = '[\u3040-\u30ff\u4e00-\u9fff]'
+quote_chars         = "\"'`"
+
+# T1 costs one token per occurrence in this model's vocabulary. Braced or
+# underscored forms cost three to five and lose their delimiters.
+placeholder_fmt     = "T%d"
+
+# A placeholder counts as restored only when it survives as a standalone
+# token. placeholder_loose also matches the forms the decoder produces when
+# it damages one: lower-cased, or fused into an adjacent word.
+# \b cannot be used here: Python counts Japanese characters as word
+# characters, so a placeholder sitting between them would never match.
+# Only an adjacent ASCII letter or digit means the token was damaged.
+placeholder_pattern = '(?<![A-Za-z0-9])T(\d{1,3})(?![A-Za-z0-9])'
+placeholder_loose   = '(?i)T(\d{1,3})'
