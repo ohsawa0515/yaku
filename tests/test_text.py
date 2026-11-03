@@ -178,3 +178,25 @@ def test_osc_hyperlink_is_removed_with_its_payload():
     link = "\x1b]8;;https://example.com\x1b\\docs\x1b]8;;\x1b\\"
     assert strip_ansi(link) == "docs"
     assert strip_ansi("\x1b]8;;https://example.com\x07docs\x1b]8;;\x07") == "docs"
+
+
+def test_overstrike_bold_and_underline_are_removed():
+    from yaku.text import strip_overstrike
+
+    assert strip_overstrike("N\bNA\bAM\bME\bE") == "NAME"
+    assert strip_overstrike("_\bb_\bu_\bn_\bd") == "bund"
+
+
+def test_overstrike_matches_col_b_on_man_output():
+    import shutil
+    import subprocess
+
+    import pytest
+
+    from yaku.text import strip_overstrike
+
+    if shutil.which("col") is None:
+        pytest.skip("col not available")
+    raw = "N\bNA\bAM\bME\bE\n     t\bta\bar\br \x5f\x08b\x5f\x08u\n"
+    expected = subprocess.run(["col", "-bx"], input=raw, capture_output=True, text=True).stdout
+    assert strip_overstrike(raw).split() == expected.split()

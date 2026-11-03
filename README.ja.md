@@ -33,7 +33,7 @@ Python 3.15 では、sentencepiece のビルド済み wheel がまだ公開さ�
 
 ```console
 terraform plan 2>&1 | yaku
-man tar | col -bx | yaku
+man tar | yaku
 kubectl describe pod web | yaku
 pbpaste | yaku
 ```

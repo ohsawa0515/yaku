@@ -29,6 +29,16 @@ def strip_ansi(text: str) -> str:
     return ANSI.sub("", text)
 
 
+# Overstrike pairs ("N\bN" bold, "_\bx" underline) as man emits them when
+# its output is not a terminal. The character written last is the one kept.
+_OVERSTRIKE = re.compile(r"[^\n]\x08")
+
+
+def strip_overstrike(text: str) -> str:
+    """Remove backspace overstrikes, as ``col -b`` does."""
+    return _OVERSTRIKE.sub("", text)
+
+
 def split_indent(text: str) -> tuple[str, str, str]:
     """Split a line into leading whitespace, content and trailing whitespace."""
     m = _INDENT.match(text)

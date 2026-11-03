@@ -13,6 +13,7 @@ from yaku.cache import Cache, model_fingerprint
 from yaku.loader import RuleError, load_mask_rules, load_passthrough, load_source, load_target
 from yaku.masking import Masker
 from yaku.pipeline import Pipeline
+from yaku.text import strip_overstrike
 
 SOURCE_LANG = "en"
 
@@ -25,7 +26,7 @@ def build_parser() -> argparse.ArgumentParser:
         epilog=(
             "examples:\n"
             "  terraform plan 2>&1 | yaku\n"
-            "  man tar | col -bx | yaku\n"
+            "  man tar | yaku\n"
             "  yaku --dry-run < output.txt\n"
             "\n"
             "first use:\n"
@@ -132,7 +133,7 @@ def main(argv: list[str] | None = None) -> int:
     ]
 
     masker = Masker(rules=rules, target=target)
-    raw_lines = sys.stdin.read().splitlines()
+    raw_lines = strip_overstrike(sys.stdin.read()).splitlines()
 
     if args.dry_run:
         return _dry_run(raw_lines, masker, source, target, passthrough, args)
