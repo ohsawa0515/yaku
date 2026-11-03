@@ -80,3 +80,10 @@ def test_passthrough_patterns_are_compiled(tmp_path):
     write(tmp_path, "syntax/x.toml", "[[passthrough]]\nname='blank'\npattern='^$'\n")
     patterns = load_passthrough([tmp_path])
     assert [p.pattern for p in patterns] == ["^$"]
+
+
+def test_switching_a_rule_keeps_its_other_fields(mask_rules):
+    import dataclasses
+
+    quoted = next(r for r in mask_rules if r.name == "QUOTED")
+    assert dataclasses.replace(quoted, enabled=False).encloses

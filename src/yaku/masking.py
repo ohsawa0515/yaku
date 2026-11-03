@@ -50,18 +50,19 @@ class Masker:
 
         def replace(m: re.Match[str], encloses: bool) -> str:
             span = m.group(0)
+            holds_placeholder = self.target.placeholder_pattern.search(span) is not None
             # A span holding a placeholder was produced by an earlier rule.
             # Masking it again would bury one number inside another, so only
             # rules that enclose their contents take it over, as original text.
-            if self.target.placeholder_pattern.search(span):
-                if not encloses:
-                    return span
-                span = self.unmask(span, values)
+            if holds_placeholder and not encloses:
+                return span
             # A placeholder glued to a letter or digit ("T1hostname") is
             # indistinguishable from one the decoder damaged, so the loss
             # check could not be trusted. Leave such spans in place.
             if _glued(m.string, m.start(), m.end()):
                 return span
+            if holds_placeholder:
+                span = self.unmask(span, values)
             # Punctuation that ends a sentence or clause belongs to the
             # sentence, not to the path or URL before it. Masking it would
             # hide the boundary from the sentence splitter.

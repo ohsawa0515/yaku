@@ -244,3 +244,14 @@ def test_width_does_not_cut_inside_an_identifier(make):
     pipeline.width = 20
     out = pipeline._wrap("作成: " + "a" * 30 + " を確認", "")
     assert any("a" * 30 in line for line in out)
+
+
+def test_width_never_splits_a_protected_value(make):
+    pipeline = make()
+    pipeline.width = 20
+    lines = pipeline.prepare(
+        ['Use "/tmp/a directory with spaces/config.json" for the file in question.']
+    )
+    pipeline.run(lines)
+    out = pipeline.render(lines[0])
+    assert any('"/tmp/a directory with spaces/config.json"' in line for line in out)

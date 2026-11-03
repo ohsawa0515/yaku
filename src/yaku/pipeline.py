@@ -339,20 +339,34 @@ class Pipeline:
             return [*line.raws, f"{line.indent}  -> {restored}{note}"]
 
         if len(line.raws) > 1 or self.width > 0:
-            return self._wrap(restored, line.indent)
+            return self._wrap(self._units(line.result, line.values), line.indent)
         return [f"{line.indent}{restored}{line.trailing}"]
 
-    def _wrap(self, text: str, indent: str) -> list[str]:
+    def _units(self, result: str, values: list[str]) -> list[str]:
+        """Split a translation into characters and whole protected values."""
+        units: list[str] = []
+        position = 0
+        for m in self.target.placeholder_pattern.finditer(result):
+            units.extend(result[position : m.start()])
+            index = int(m.group(1))
+            units.append(values[index - 1] if 1 <= index <= len(values) else m.group(0))
+            position = m.end()
+        units.extend(result[position:])
+        return units
+
+    def _wrap(self, units: Sequence[str], indent: str) -> list[str]:
+        """Wrap units to the requested width; a unit is never split."""
         if self.width <= 0:
-            return [f"{indent}{text}"]
+            return [indent + "".join(units)]
         room = max(self.width - len(indent), 20)
         out: list[str] = []
         current = ""
-        for index, char in enumerate(text):
-            current += char
+        for index, unit in enumerate(units):
+            current += unit
             if len(current) < room:
                 continue
-            following = text[index + 1 : index + 2]
+            char = unit[-1]
+            following = units[index + 1][:1] if index + 1 < len(units) else ""
             # Never cut inside an ASCII word (a restored identifier) and never
             # start a line with a character that may not begin one.
             inside_word = (
@@ -367,4 +381,4 @@ class Pipeline:
             current = ""
         if current:
             out.append(indent + current)
-        return out or [indent + text]
+        return out or [indent + "".join(units)]

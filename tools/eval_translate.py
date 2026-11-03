@@ -27,6 +27,7 @@ a run of this over the same files, and the numbers compared.
 from __future__ import annotations
 
 import argparse
+import dataclasses
 import sys
 from collections import Counter
 from pathlib import Path
@@ -48,14 +49,7 @@ def _apply_switches(rules: list[MaskRule], enable: set[str], disable: set[str]) 
             enabled = True
         if rule.name in disable:
             enabled = False
-        out.append(
-            MaskRule(
-                name=rule.name,
-                pattern=rule.pattern,
-                order=rule.order,
-                enabled=enabled,
-            )
-        )
+        out.append(dataclasses.replace(rule, enabled=enabled))
     return out
 
 

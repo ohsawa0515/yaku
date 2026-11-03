@@ -278,3 +278,9 @@ def test_literal_placeholder_text_inside_enclosing_spans_is_protected(mask_rules
         masked, values = masker.mask(text)
         assert masked == text.replace(values[0], "T1")
         assert masker.unmask(masked, values) == text
+
+
+def test_skipped_glued_match_leaves_existing_placeholders_intact(mask_rules, japanese):
+    masker = Masker(rules=mask_rules, target=japanese)
+    masked, values = masker.mask("Read config/T2/file before starting.")
+    assert masker.unmask(masked, values) == "Read config/T2/file before starting."

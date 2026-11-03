@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import dataclasses
 import os
 import sys
 from pathlib import Path
@@ -126,12 +127,7 @@ def main(argv: list[str] | None = None) -> int:
     rules = [
         rule
         if rule.name not in enable | disable
-        else type(rule)(
-            name=rule.name,
-            pattern=rule.pattern,
-            order=rule.order,
-            enabled=rule.name in enable,
-        )
+        else dataclasses.replace(rule, enabled=rule.name in enable)
         for rule in rules
     ]
 
