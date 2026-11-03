@@ -1,11 +1,13 @@
 [[rule]]
 name    = "TFADDR"
 order   = 50
+encloses = true
 pattern = '''\b(?:module|data|resource|var|local)\.(?:[\w\-\.]|\[(?:"(?:[^"\\\n]|\\.)*"|\d+|\*)\])+'''
 
 [[rule]]
 name    = "RESOURCE"
 order   = 70
+encloses = true
 pattern = '''\b[a-z][a-z0-9]*_[a-z0-9_]+(?:\.(?:[\w\-\.]|\[(?:"(?:[^"\\\n]|\\.)*"|\d+|\*)\])+)+'''
 
 [[passthrough]]

@@ -328,3 +328,14 @@ def test_terraform_index_keys_are_part_of_the_address(mask_rules, japanese):
     ):
         _, values = masker.mask(f"{address} will be created")
         assert values == [address]
+
+
+def test_index_key_that_looks_like_a_path_stays_inside_the_address(mask_rules, japanese):
+    masker = Masker(rules=mask_rules, target=japanese)
+    for address in (
+        'module.storage.aws_s3_bucket.logs["/archive/2026"]',
+        'aws_s3_bucket.logs["/archive/2026"]',
+    ):
+        masked, values = masker.mask(f"{address} will be created")
+        assert values == [address]
+        assert masked == "T1 will be created"
