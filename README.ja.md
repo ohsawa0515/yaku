@@ -2,6 +2,8 @@
 
 [English](README.md) | 日本語
 
+[![PyPI](https://img.shields.io/pypi/v/yaku)](https://pypi.org/project/yaku/) [![Python](https://img.shields.io/pypi/pyversions/yaku)](https://pypi.org/project/yaku/)
+
 コマンド出力を翻訳する、完全オフラインのフィルタです。翻訳するのは文章の部分だけで、それ以外は原文のまま残します。
 
 識別子、フラグ、パス、引用符で囲まれた文字列は変わりません。モデルに渡す前に退避し、翻訳後に元へ戻すためです。ネットワーク通信も API キーも不要で、データがマシンの外に出ることはありません。
