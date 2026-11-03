@@ -15,7 +15,7 @@ from functools import partial
 from yaku.types import MaskRule, TargetProfile
 
 _CLOSING = ".,;:"
-_WORD = re.compile(r"\w+")
+_WORD = re.compile(r"[A-Za-z0-9_]+")
 
 
 @dataclass

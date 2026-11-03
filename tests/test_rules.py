@@ -303,3 +303,10 @@ def test_words_that_resemble_placeholders_are_not_damage(mask_rules, japanese):
     assert masker.residue(translated, len(values), masked) == 0
     assert masker.residue(translated, len(values)) == 1
     assert masker.unmask(masked, values) == text
+
+
+def test_source_word_is_recognised_next_to_japanese_text(mask_rules, japanese):
+    masker = Masker(rules=mask_rules, target=japanese)
+    masked, values = masker.mask("The ext4 filesystem is supported with --force.")
+    translated = "ext4ファイルシステムはT1に対応しています。"
+    assert masker.residue(translated, len(values), masked) == 0
