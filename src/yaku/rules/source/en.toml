@@ -1,0 +1,27 @@
+lang              = "en"
+letter            = '[A-Za-z]'
+word              = '[A-Za-z]{2,}'
+min_alpha_ratio   = 0.45
+min_words         = 3
+sentence_end      = '[.:;!?]\s*$'
+# A sentence may start lowercase in a manual page ("... for T2. ssh-keygen
+# can create ..."), but only after a period that follows a letter or digit:
+# not after "!" or "?", a list number such as "1.", or an ellipsis. Single
+# initials and the common abbreviations never end a sentence; an acronym such
+# as LF or URL does.
+sentence_split    = '(?<!\b[A-Z]\.)(?<!\be\.g\.)(?<!\bi\.e\.)(?<!\bvs\.)(?<!\betc\.)(?<!\bcf\.)(?:(?<=[.!?])\s{1,3}(?=[A-Z(])|(?<!\b\d\.)(?<!\.\.\.)(?<=[A-Za-z0-9]\.)\s{1,3}(?=[a-z~$]))'
+max_segment_chars = 220
+
+# The decoder tends to translate only one of two clauses joined by a colon
+# or a semicolon. In labelled manual pages and PEP 8, 87% of segments with a
+# colon in the middle and 37% of those with a semicolon lost a clause; each
+# clause translated on its own survives. Labels such as "Plan:" and code
+# such as "do_one(); do_two()" have too few words to be split.
+clause_split      = '[:;]\s+(?=\S)'
+clause_min_words  = 4
+
+# "a; b; and c" is one list: splitting it loses the items' shared subject.
+# "; or" is not included: what follows it is an alternative clause of its
+# own, and in held-out manual pages keeping such segments whole dropped that
+# clause in 3 of 4 cases.
+clause_list       = ';\s+and\b'

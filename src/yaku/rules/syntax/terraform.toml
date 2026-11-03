@@ -1,0 +1,49 @@
+[[rule]]
+name    = "TFADDR"
+order   = 50
+encloses = true
+pattern = '''\b(?:module|data|resource|var|local)\.(?:[\w\-\.]|\[(?:"(?:[^"\\\n]|\\.)*"|\d+|\*)\])+'''
+
+[[rule]]
+name    = "RESOURCE"
+order   = 70
+encloses = true
+pattern = '''\b[a-z][a-z0-9]*_[a-z0-9_]+(?:\.(?:[\w\-\.]|\[(?:"(?:[^"\\\n]|\\.)*"|\d+|\*)\])+)+'''
+
+[[passthrough]]
+name    = "diff-line"
+pattern = '^\s*[~+\-]\s'
+
+[[passthrough]]
+name    = "known-after-apply"
+pattern = '^\s*#\s*\('
+
+[[passthrough]]
+name    = "destroy-marker"
+pattern = '^\s*<=\s'
+
+# Requires a resource address prefix. Bare verbs such as "Reading" and
+# "Creating" occur in ordinary documentation prose.
+[[passthrough]]
+name    = "progress"
+pattern = '^\s*\S+\.\S+:\s*(?:Refreshing state|Reading|Read|Creating|Created|Modifying|Modifications|Destroying|Destruction|Still |Provisioning|Preparing|Importing|Refresh)'
+
+[[passthrough]]
+name    = "id-attribute"
+pattern = '\[id='
+
+[[passthrough]]
+name    = "state-lock"
+pattern = '^\s*(?:Acquiring|Releasing) state lock'
+
+# Source excerpt inside a diagnostic: "  15:   content = local.x". The
+# indentation and the line number together keep this off numbered prose.
+[[passthrough]]
+name    = "diagnostic-source"
+pattern = '^\s{2,}\d+:\s+\S'
+
+# The resource a diagnostic is about: "  with aws_s3_bucket.ceph,". It ends
+# in a comma, so without this it would be joined to the "on main.tf ..." line.
+[[passthrough]]
+name    = "diagnostic-with"
+pattern = '^\s*with (?:(?:module|data)\.[\w\-]+\.)*[\w\-]+\.[\w\-\[\]"\.]+,\s*$'

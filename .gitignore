@@ -73,7 +73,7 @@ docs/_build/
 
 # PyBuilder
 .pybuilder/
-target/
+/target/
 
 # Jupyter Notebook
 .ipynb_checkpoints
@@ -217,13 +217,9 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
-
+.memo
+.tours
 .convert/
 .venv/
 models/
 *.sqlite3
-CLAUDE.md
-check_placeholders*.py
-check_vocab*.py
-eval_*.py
-jt*.py

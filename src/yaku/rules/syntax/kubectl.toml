@@ -1,0 +1,49 @@
+[[passthrough]]
+name    = "section-heading"
+pattern = '^\s*\w+:\s*$'
+
+# Two gaps of three or more spaces between columns: a table row, however
+# the columns are filled ("Tue, 03 May 2016 12:43:38 -0700    ...").
+[[passthrough]]
+name    = "wide-table-row"
+pattern = '\S(?: {3,}|\t[ \t]*)\S(?:.*?\S)?(?: {3,}|\t[ \t]*)\S'
+
+[[passthrough]]
+name    = "event-row"
+pattern = '^\s*(?:Normal|Warning)\s+\w+\s+\d'
+
+# An example invocation without flags, as in kubectl help:
+#   kubectl describe pods frontend
+# Every word after kubectl starts lowercase, none is a function word, and the
+# line does not end a sentence. Prose about kubectl fails at least one of these.
+[[passthrough]]
+name    = "example-invocation"
+pattern = '^\s*kubectl(?:\s+(?!(?:the|a|an|of|to|is|are|be|and|or|in|on|for|with|that|this|can|will|may|it|by|from|as|when|if|not)\b)[a-z0-9][\w.\-/:=]*)+\s*$'
+
+# A field of a describe record: "Name:         nginx", "Type:	Secret".
+# The gap of two or more spaces or a tab after the colon is what separates a
+# record from prose; a sentence never pads its colon to align a column.
+[[passthrough]]
+name    = "field-record"
+pattern = '^\s*[A-Z][\w\-()]*(?: [A-Za-z][\w\-()]*){0,3}:(?:\s{2,}|\t)\S'
+
+# The header of a column-aligned table: "Type    Reason   Age   From".
+[[passthrough]]
+name    = "table-header"
+pattern = '^\s*[A-Z][A-Za-z]*(?:(?:\s{2,}|\t+)[A-Z][A-Za-z]*){2,}\s*$'
+
+# A volume mount under Mounts: "/var/run/secrets/... from kube-api-access (ro)".
+[[passthrough]]
+name    = "mount"
+pattern = '^\s+/\S* from \S+ \((?:ro|rw)\)\s*$'
+
+# A taint or toleration: "node.kubernetes.io/unreachable:NoExecute op=Exists".
+[[passthrough]]
+name    = "taint"
+pattern = ':(?:NoExecute|NoSchedule|PreferNoSchedule)\b'
+
+# A key with a single value, as in an annotation or label list:
+# "prometheus.io/port: 8008". A sentence after a colon has more than one word.
+[[passthrough]]
+name    = "key-scalar"
+pattern = '^\s*[A-Za-z][\w.\-/]*:\s+\S+\s*$'
