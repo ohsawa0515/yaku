@@ -1,0 +1,42 @@
+name: Model setup
+
+# Converting the model needs torch and a ~300 MB checkpoint, so this runs only
+# when something that can change the result changes, and weekly to catch
+# upstream drift. The regular CI never exercises `yaku setup`.
+on:
+  pull_request:
+    paths:
+      - src/yaku/setup.py
+      - src/yaku/rules/target/*.toml
+      - src/yaku/engines/**
+      - pyproject.toml
+      - uv.lock
+      - .github/workflows/setup.yml
+  schedule:
+    - cron: "17 3 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      YAKU_MODELS_DIR: ${{ runner.temp }}/models
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          python-version: "3.12"
+      - run: uv sync --locked
+      - name: Convert the model
+        run: uv run yaku setup --lang ja
+      - name: Translate a sentence with it
+        run: |
+          out="$(printf 'The file was created successfully.\n' | uv run yaku)"
+          printf '%s\n' "$out"
+          printf '%s' "$out" | python3 -c "import re,sys; sys.exit(0 if re.search('[぀-ヿ一-鿿]', sys.stdin.read()) else 1)"
