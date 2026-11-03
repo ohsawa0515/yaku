@@ -30,6 +30,11 @@ def strip_ansi(text: str) -> str:
     return ANSI.sub("", text)
 
 
+# Only colour and style sequences describe a state that can be replayed;
+# erase and cursor controls would act a second time.
+_SGR = re.compile(r"\x1B\[[0-9;:]*m")
+
+
 def _display_width(ch: str) -> int:
     # Not just combining(): many marks (variation selectors, ZWJ, enclosing
     # marks) have combining class 0 but still take no column.
@@ -53,7 +58,8 @@ def _resolve_line(line: str) -> str:
         m = ANSI.match(line, pos)
         if m is not None:
             escapes[col] = escapes.get(col, "") + m.group(0)
-            seen.append(m.group(0))
+            if _SGR.fullmatch(m.group(0)):
+                seen.append(m.group(0))
             pos = m.end()
             continue
         ch = line[pos]
@@ -83,7 +89,7 @@ def _resolve_line(line: str) -> str:
     # order changed, replay the whole sequence so the rendition in effect at
     # the end of the line is the one the input ended with.
     result = "".join(out)
-    if ANSI.findall(result) != seen:
+    if [e for e in ANSI.findall(result) if _SGR.fullmatch(e)] != seen:
         result += "".join(seen)
     return result
 

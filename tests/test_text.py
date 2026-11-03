@@ -264,3 +264,11 @@ def test_overstrike_reordered_escapes_keep_the_final_rendition():
     assert ANSI.findall(strip_overstrike("\x1b[31mab\x1b[0m\b\bX"))[-1] == "\x1b[0m"
     # Untouched order is left alone.
     assert strip_overstrike("\x1b[31m_\x1b[0m\bX") == "\x1b[31mX\x1b[0m"
+
+
+def test_overstrike_replay_does_not_repeat_erase_controls():
+    from yaku.text import strip_overstrike
+
+    out = strip_overstrike("\x1b[2Kab\x1b[0m\b\b\x1b[31mX")
+    assert out.count("\x1b[2K") == 1
+    assert out.endswith("\x1b[0m\x1b[31m")
