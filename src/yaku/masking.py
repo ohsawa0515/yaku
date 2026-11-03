@@ -41,6 +41,12 @@ class Masker:
         """Replace identifiers with placeholders, in rule order."""
         values: list[str] = []
 
+        # Text that already looks like a placeholder would collide with the
+        # ones issued below, so it is carried through as a value itself.
+        def keep_literal(m: re.Match[str]) -> str:
+            values.append(m.group(0))
+            return self.target.placeholder(len(values))
+
         def replace(m: re.Match[str]) -> str:
             span = m.group(0)
             # A span holding a placeholder was produced by an earlier rule.
@@ -61,22 +67,23 @@ class Masker:
             values.append(span)
             return self.target.placeholder(len(values)) + tail
 
-        masked = text
+        masked = self.target.placeholder_pattern.sub(keep_literal, text)
         for rule in self._active:
             masked = rule.pattern.sub(replace, masked)
         return masked, values
 
     def unmask(self, text: str, values: list[str]) -> str:
-        """Put the values back.
+        """Put the values back in a single pass.
 
-        Descending order matters: replacing T1 first would also rewrite the
-        leading characters of T11.
+        Substituting one placeholder at a time would also rewrite
+        placeholder-like text inside a value that was just restored.
         """
 
-        restored = text
-        for index in range(len(values), 0, -1):
-            restored = restored.replace(self.target.placeholder(index), values[index - 1])
-        return restored
+        def restore(m: re.Match[str]) -> str:
+            index = int(m.group(1))
+            return values[index - 1] if 1 <= index <= len(values) else m.group(0)
+
+        return self.target.placeholder_pattern.sub(restore, text)
 
     def lost(self, text: str, count: int) -> int:
         """Placeholders that did not survive as standalone tokens.

@@ -24,6 +24,18 @@ CREATE TABLE IF NOT EXISTS entry (
 """
 
 
+def model_fingerprint(model_dir: Path) -> str:
+    """Identify an installed model by location, size and modification time.
+
+    Replacing a model in place changes the file even when its path does not.
+    """
+    try:
+        stat = (model_dir / "model.bin").stat()
+    except OSError:
+        return str(model_dir)
+    return f"{model_dir.resolve()}@{stat.st_size}:{stat.st_mtime_ns}"
+
+
 class Cache:
     """Key-value store backed by SQLite, or a no-op when it cannot open.
 

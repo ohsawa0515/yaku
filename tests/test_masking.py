@@ -179,3 +179,17 @@ def test_syscall_rule_ignores_prose(mask_rules, japanese):
         "You can rename and/or remove entries: see below.",
     ]:
         assert masker.mask(text)[1] == [], text
+
+
+def test_literal_placeholder_text_round_trips(masker):
+    text = "The T1 setting is enabled with --force."
+    masked, values = masker.mask(text)
+    assert masker.unmask(masked, values) == text
+    assert masker.residue(masked, len(values)) == 0
+
+
+def test_restored_values_are_not_rewritten(masker):
+    values = ["/etc/first.conf", "/etc/T1config.conf"]
+    assert (
+        masker.unmask("Read T1 and T2.", values) == "Read /etc/first.conf and /etc/T1config.conf."
+    )

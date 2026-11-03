@@ -189,3 +189,18 @@ def test_traceback_body_is_not_translated(make):
     lines = make(join=False).prepare(raw)
     translated = [line.body for line in lines if line.translatable]
     assert translated == [raw[-1]]
+
+
+def test_spacing_inside_quotes_is_preserved(make):
+    lines = make().prepare(['Set the message to "hello  world" before starting.'])
+    line = next(line for line in lines if line.translatable)
+    assert line.values == ['"hello  world"']
+
+
+def test_line_that_is_already_translated_is_not_absorbed(make):
+    raw = [
+        "The configuration file is read when the program starts and",
+        "This line has 日本語 in it already",
+    ]
+    lines = make(join=True).prepare(raw)
+    assert [line.translatable for line in lines] == [True, False]

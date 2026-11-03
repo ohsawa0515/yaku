@@ -215,3 +215,9 @@ def test_prose_with_quotes_or_percent_is_not_a_command():
 
 def test_zsh_prompt_with_user_and_host_is_a_command():
     assert looks_like_command("thomas@ninox ~ % aws --debug sqs list-queues")
+
+
+def test_quoted_span_is_masked_whole(mask_rules, japanese):
+    masked, values = Masker(rules=mask_rules, target=japanese).mask('the "old --force mode" flag')
+    assert masked == "the T1 flag"
+    assert values == ['"old --force mode"']

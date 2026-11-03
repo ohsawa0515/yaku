@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 from yaku import __version__, paths
-from yaku.cache import Cache
+from yaku.cache import Cache, model_fingerprint
 from yaku.loader import RuleError, load_mask_rules, load_passthrough, load_source, load_target
 from yaku.masking import Masker
 from yaku.pipeline import Pipeline
@@ -159,7 +159,8 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     active = ",".join(sorted(rule.name for rule in rules if rule.enabled))
-    namespace = f"{target.model_name}:{args.beam}:{args.length_penalty}:{active}"
+    model_id = f"{target.model_name}:{model_fingerprint(model_dir)}"
+    namespace = f"{model_id}:{args.beam}:{args.length_penalty}:{active}"
     cache_path = None if args.no_cache else paths.cache_path()
 
     with Cache(cache_path, namespace) as cache:

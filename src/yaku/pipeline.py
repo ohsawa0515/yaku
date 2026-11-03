@@ -132,6 +132,7 @@ class Pipeline:
             and not self.source.sentence_end.search(pending[-1].body)
             and not is_passthrough(line, self.passthrough)
             and not looks_like_command(body)
+            and self.target.already_translated.search(body) is None
             and bool(self.source.letter.search(body))
         )
 
@@ -173,7 +174,7 @@ class Pipeline:
         def flush() -> None:
             if not pending:
                 return
-            body = _SPACES.sub(" ", " ".join(p.body for p in pending)).strip()
+            body = " ".join(p.body.strip() for p in pending)
             line = Line(
                 raws=[p.raw for p in pending],
                 indent=pending[0].indent,
@@ -243,7 +244,10 @@ class Pipeline:
         return out
 
     def _attach(self, line: Line, body: str) -> None:
-        line.masked, line.values = self.masker.mask(body)
+        masked, line.values = self.masker.mask(body)
+        # Runs of spaces are collapsed after masking so that protected
+        # values keep their original spacing.
+        line.masked = _SPACES.sub(" ", masked).strip()
         line.segments = split_sentences(line.masked, self.source)
 
     # -- translation ------------------------------------------------------

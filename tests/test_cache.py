@@ -1,4 +1,4 @@
-from yaku.cache import Cache
+from yaku.cache import Cache, model_fingerprint
 
 
 def test_round_trip(tmp_path):
@@ -50,3 +50,10 @@ def test_parent_directory_is_created(tmp_path):
     with Cache(path, "ns") as cache:
         assert cache.enabled
     assert path.is_file()
+
+
+def test_fingerprint_changes_when_model_is_replaced(tmp_path):
+    (tmp_path / "model.bin").write_bytes(b"a")
+    before = model_fingerprint(tmp_path)
+    (tmp_path / "model.bin").write_bytes(b"ab")
+    assert model_fingerprint(tmp_path) != before

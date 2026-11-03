@@ -43,7 +43,7 @@ def wilson(hits: int, n: int, z: float = 1.96) -> tuple[float, float]:
     return max(0.0, centre - spread), min(1.0, centre + spread)
 
 
-def pool_adjacent_violators(rates: list[float], sizes: list[int]) -> list[float]:
+def pool_adjacent_violators(rates: list[float], sizes: list[float]) -> list[float]:
     """Closest non-increasing sequence to rates, weighted by sizes."""
     blocks = [[r * n, n, 1] for r, n in zip(rates, sizes, strict=True)]  # hits, size, members
     merged: list[list[float]] = []
@@ -60,6 +60,10 @@ def pool_adjacent_violators(rates: list[float], sizes: list[int]) -> list[float]
     return out
 
 
+def weight(record: dict) -> float:
+    return record.get("weight", 1.0)
+
+
 def band_table(records: list[dict], width: float, flag_at: float) -> None:
     bands: dict[int, list[dict]] = {}
     for r in records:
@@ -67,21 +71,25 @@ def band_table(records: list[dict], width: float, flag_at: float) -> None:
     keys = sorted(bands)
     hits = [sum(1 for r in bands[k] if r["label"] == "dropped") for k in keys]
     sizes = [len(bands[k]) for k in keys]
-    smooth = pool_adjacent_violators([h / n for h, n in zip(hits, sizes, strict=True)], sizes)
+    # Rates and smoothing use sampling weights; counts and intervals use
+    # the labelled records themselves.
+    w_hits = [sum(weight(r) for r in bands[k] if r["label"] == "dropped") for k in keys]
+    w_sizes = [sum(weight(r) for r in bands[k]) for k in keys]
+    smooth = pool_adjacent_violators([h / n for h, n in zip(w_hits, w_sizes, strict=True)], w_sizes)
 
     print(
         f"\n{'band':>11} {'labelled':>8} {'dropped':>7} {'rate':>5}"
         f"  {'95% interval':>12} {'smoothed':>8}"
     )
     threshold = None
-    for key, h, n, rate in zip(keys, hits, sizes, smooth, strict=True):
+    for key, h, n, wh, wn, rate in zip(keys, hits, sizes, w_hits, w_sizes, smooth, strict=True):
         low, high = wilson(h, n)
         hi_edge = (key + 1) * width
         mark = "  flag" if rate >= flag_at else ""
         if rate >= flag_at:
             threshold = hi_edge
         print(
-            f"{key * width:5.2f}-{hi_edge:4.2f} {n:8} {h:7} {h / n:5.0%}"
+            f"{key * width:5.2f}-{hi_edge:4.2f} {n:8} {h:7} {wh / wn:5.0%}"
             f"  {low:4.0%}-{high:4.0%}   {rate:8.0%}{mark}"
         )
     if threshold is None:
@@ -98,9 +106,6 @@ def main(argv: list[str]) -> int:
     args = parser.parse_args(argv)
     records = [json.loads(line) for line in args.labelled.read_text().splitlines()]
     records = [r for r in records if r.get("label") in ("complete", "dropped")]
-
-    def weight(r: dict) -> float:
-        return r.get("weight", 1.0)
 
     dropped = [r for r in records if r["label"] == "dropped"]
     total_dropped = sum(map(weight, dropped))

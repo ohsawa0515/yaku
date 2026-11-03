@@ -26,6 +26,12 @@ name    = "DOTQUOTED"
 order   = 60
 pattern = '"[^"\n]{1,60}"(?:\."[^"\n]{1,60}")+'
 
+# A quoted span is taken whole, before the tokens inside it (flags, paths).
+[[rule]]
+name    = "QUOTED"
+order   = 65
+pattern = '''["'`][^"'`\n]{1,60}["'`]'''
+
 # Paths are taken before the dotted-name rules (TFADDR, RESOURCE): a path
 # component such as ssh_config.d or data.json would otherwise be masked on
 # its own and split the path into pieces.
@@ -87,11 +93,6 @@ pattern = '\b[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+\b'
 name    = "CONST"
 order   = 160
 pattern = '''(?<![\w"'])[A-Z]{3,}(?![\w])'''
-
-[[rule]]
-name    = "QUOTED"
-order   = 180
-pattern = '''["'`][^"'`\n]{1,60}["'`]'''
 
 [[rule]]
 name    = "CFGKEY"

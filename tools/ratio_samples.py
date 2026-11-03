@@ -58,13 +58,17 @@ def main() -> int:
                 ratio = len(result) / max(len(segment), 1)
                 if not args.low <= ratio < args.high:
                     continue
-                count = len(target.placeholder_pattern.findall(segment))
+                expected = set(target.placeholder_pattern.findall(segment))
                 record = {
                     "file": path.name,
                     "ratio": round(ratio, 3),
                     "source": segment,
                     "translation": result,
-                    "placeholders_ok": masker.lost(result, count) == 0 if count else None,
+                    "placeholders_ok": (
+                        expected <= set(target.placeholder_pattern.findall(result))
+                        if expected
+                        else None
+                    ),
                 }
                 print(json.dumps(record, ensure_ascii=False))
     return 0
