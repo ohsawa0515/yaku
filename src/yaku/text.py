@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import unicodedata
 
 from yaku.types import SourceProfile
 
@@ -29,14 +30,42 @@ def strip_ansi(text: str) -> str:
     return ANSI.sub("", text)
 
 
-# Overstrike pairs ("N\bN" bold, "_\bx" underline) as man emits them when
-# its output is not a terminal. The character written last is the one kept.
-_OVERSTRIKE = re.compile(r"[^\n]\x08")
+def _display_width(ch: str) -> int:
+    if unicodedata.combining(ch):
+        return 0
+    return 2 if unicodedata.east_asian_width(ch) in "WF" else 1
+
+
+def _resolve_line(line: str) -> str:
+    cells: list[str] = []
+    col = 0
+    for ch in line:
+        if ch == "\x08":
+            col = max(0, col - 1)
+            continue
+        width = _display_width(ch)
+        if width == 0:
+            if col > 0 and col <= len(cells):
+                cells[col - 1] += ch
+            continue
+        cells.extend(" " * (col - len(cells)))
+        cells[col : col + width] = [ch] + [""] * (width - 1)
+        col += width
+    return "".join(cells)
 
 
 def strip_overstrike(text: str) -> str:
-    """Remove backspace overstrikes, as ``col -b`` does."""
-    return _OVERSTRIKE.sub("", text)
+    """Resolve backspace overstrikes the way ``col -b`` does.
+
+    man writes bold as "N\\bN" and underline as "_\\bx". A backspace only moves
+    the cursor, so the text is replayed per line by display column and the
+    last character written to a column wins. Wide characters occupy two
+    columns, which is why a plain "drop the character before the backspace"
+    rule is not enough.
+    """
+    if "\x08" not in text:
+        return text
+    return "\n".join(_resolve_line(line) for line in text.split("\n"))
 
 
 def split_indent(text: str) -> tuple[str, str, str]:

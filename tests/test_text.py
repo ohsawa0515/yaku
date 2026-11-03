@@ -200,3 +200,23 @@ def test_overstrike_matches_col_b_on_man_output():
     raw = "N\bNA\bAM\bME\bE\n     t\bta\bar\br \x5f\x08b\x5f\x08u\n"
     expected = subprocess.run(["col", "-bx"], input=raw, capture_output=True, text=True).stdout
     assert strip_overstrike(raw).split() == expected.split()
+
+
+def test_overstrike_consecutive_backspaces_overwrite_by_column():
+    from yaku.text import strip_overstrike
+
+    assert strip_overstrike("AB\b\bCD") == "CD"
+
+
+def test_overstrike_wide_character_covers_two_columns():
+    from yaku.text import strip_overstrike
+
+    assert strip_overstrike("__\b\b字") == "字"
+    assert strip_overstrike("字\b\b__") == "__"
+
+
+def test_overstrike_trailing_backspace_deletes_nothing():
+    from yaku.text import strip_overstrike
+
+    assert strip_overstrike("abc\b") == "abc"
+    assert strip_overstrike("abc\b\n\bdef") == "abc\ndef"
