@@ -251,3 +251,14 @@ def test_overstrike_zero_width_marks_do_not_take_a_column():
 
     for mark in ("\u200b", "\ufe0f", "\u20dd"):
         assert strip_overstrike(f"x{mark}\bx") == "x"
+
+
+def test_overstrike_final_escape_stays_last():
+    from yaku.text import strip_ansi, strip_overstrike
+
+    # Colour is switched on after the reset, so it must still be on at the end.
+    out = strip_overstrike("ab\x1b[0m\b\b\x1b[31mX")
+    assert strip_ansi(out) == "Xb"
+    assert out.endswith("\x1b[31m")
+    # A reset written last must stay last.
+    assert strip_overstrike("\x1b[31mab\x1b[0m\b\bX").endswith("\x1b[0m")
