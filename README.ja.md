@@ -11,7 +11,7 @@
 ## インストール
 
 ```console
-uv tool install yaku    # または pipx install yaku
+pip install yaku
 yaku setup --lang ja
 ```
 

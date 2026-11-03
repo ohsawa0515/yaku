@@ -11,7 +11,7 @@ Identifiers, flags, paths and quoted strings survive unchanged, because they are
 ## Install
 
 ```console
-uv tool install yaku    # or: pipx install yaku
+pip install yaku
 yaku setup --lang ja
 ```
 
