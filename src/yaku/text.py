@@ -48,12 +48,12 @@ def _resolve_line(line: str) -> str:
     escapes: dict[int, str] = {}
     col = 0
     pos = 0
-    last_escape = ""
+    seen: list[str] = []
     while pos < len(line):
         m = ANSI.match(line, pos)
         if m is not None:
             escapes[col] = escapes.get(col, "") + m.group(0)
-            last_escape = m.group(0)
+            seen.append(m.group(0))
             pos = m.end()
             continue
         ch = line[pos]
@@ -79,13 +79,12 @@ def _resolve_line(line: str) -> str:
         out.append(escapes.get(c, ""))
         if c < len(cells) and cells[c] is not None:
             out.append(cells[c])  # type: ignore[arg-type]
-    # Backspacing can place an escape before ones written earlier. Whatever
-    # the line ended with must still be the last escape in effect.
+    # Backspacing can place an escape before ones written earlier. When the
+    # order changed, replay the whole sequence so the rendition in effect at
+    # the end of the line is the one the input ended with.
     result = "".join(out)
-    if last_escape and not result.endswith(last_escape):
-        trailing = ANSI.findall(result)
-        if not trailing or trailing[-1] != last_escape:
-            result += last_escape
+    if ANSI.findall(result) != seen:
+        result += "".join(seen)
     return result
 
 
