@@ -244,3 +244,10 @@ def test_overstrike_keeps_combining_marks_after_wide_glyphs():
     assert strip_overstrike(kana + "\nN\bN") == kana + "\nN"
     assert strip_overstrike(kana + "\bX") == " X"
     assert strip_overstrike("x́\bx") == "x"
+
+
+def test_overstrike_zero_width_marks_do_not_take_a_column():
+    from yaku.text import strip_overstrike
+
+    for mark in ("\u200b", "\ufe0f", "\u20dd"):
+        assert strip_overstrike(f"x{mark}\bx") == "x"

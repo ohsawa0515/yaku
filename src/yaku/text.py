@@ -31,7 +31,9 @@ def strip_ansi(text: str) -> str:
 
 
 def _display_width(ch: str) -> int:
-    if unicodedata.combining(ch):
+    # Not just combining(): many marks (variation selectors, ZWJ, enclosing
+    # marks) have combining class 0 but still take no column.
+    if unicodedata.combining(ch) or unicodedata.category(ch) in ("Mn", "Me", "Cf"):
         return 0
     return 2 if unicodedata.east_asian_width(ch) in "WF" else 1
 
