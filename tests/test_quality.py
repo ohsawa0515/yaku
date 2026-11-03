@@ -73,3 +73,23 @@ def test_invented_placeholder_is_caught_when_none_were_issued(masker, japanese):
 def test_placeholders_are_not_checked_for_uncounted_fragments(masker, japanese):
     verdict = judge("Create a new archive.", "T1 が作成されます。", None, masker, japanese)
     assert verdict.ok
+
+
+def test_swapped_placeholders_fail(masker, japanese):
+    verdict = judge("T1 will replace T2", "T2 が T1 に置き換わります", 2, masker, japanese)
+    assert not verdict.ok
+    assert "order" in verdict.reason
+
+
+def test_reordering_after_the_subject_is_ordinary_word_order(masker, japanese):
+    verdict = judge(
+        "See T1 in T2 for details", "詳細は T2 の T1 を参照してください", 2, masker, japanese
+    )
+    assert verdict.ok
+
+
+def test_placeholders_in_source_order_pass(masker, japanese):
+    verdict = judge(
+        "T1 will replace T2 in the pool", "T1 は T2 を置き換えます", 2, masker, japanese
+    )
+    assert verdict.ok

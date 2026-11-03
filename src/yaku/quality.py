@@ -44,6 +44,9 @@ def judge(
         if extra:
             return Verdict(False, f"placeholder residue ({extra})")
 
+    if masker.reordered(source, translated):
+        return Verdict(False, "placeholder order changed")
+
     ratio = len(translated) / max(len(source), 1)
     if ratio < target.min_ratio:
         return Verdict(False, f"too short (ratio {ratio:.2f})")
