@@ -12,9 +12,16 @@ license-files = ["LICENSE"]
 authors = [{ name = "Shuichi Ohsawa" }]
 keywords = ["translation", "cli", "offline", "nmt"]
 classifiers = [
+    "Development Status :: 3 - Alpha",
     "Environment :: Console",
     "Intended Audience :: Developers",
+    "Natural Language :: Japanese",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Text Processing :: Linguistic",
     "Topic :: Utilities",
 ]
 # Rule files are TOML: tomllib is in the standard library, and its literal
@@ -27,6 +34,7 @@ dynamic = ["version"]
 
 [project.urls]
 Homepage = "https://github.com/ohsawa0515/yaku"
+Repository = "https://github.com/ohsawa0515/yaku"
 Issues = "https://github.com/ohsawa0515/yaku/issues"
 
 [project.scripts]
@@ -37,6 +45,10 @@ dev = ["pytest>=8", "ruff>=0.8"]
 
 [tool.hatch.version]
 path = "src/yaku/__init__.py"
+
+# An allowlist, so local scratch files ignored outside .gitignore stay out.
+[tool.hatch.build.targets.sdist]
+only-include = ["src", "tests", "LICENSE", "README.md", "README.ja.md", "pyproject.toml"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/yaku"]
