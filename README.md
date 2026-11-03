@@ -2,6 +2,8 @@
 
 English | [日本語](README.ja.md)
 
+[![PyPI](https://img.shields.io/pypi/v/yaku)](https://pypi.org/project/yaku/) [![Python](https://img.shields.io/pypi/pyversions/yaku)](https://pypi.org/project/yaku/)
+
 Fully offline translator for command output. Only the prose gets translated; everything else is left verbatim.
 
 Identifiers, flags, paths and quoted strings survive unchanged, because they are moved out of the way before the model sees the text and put back afterwards. No network access, no API keys, no data leaving the machine.
@@ -9,7 +11,7 @@ Identifiers, flags, paths and quoted strings survive unchanged, because they are
 ## Install
 
 ```console
-pip install yaku
+uv tool install yaku    # or: pipx install yaku
 yaku setup --lang ja
 ```
 
