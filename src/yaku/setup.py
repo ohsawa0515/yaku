@@ -20,7 +20,7 @@ from yaku.types import TargetProfile
 
 # sacremoses is deliberately absent: its normalisation disagrees with
 # reading the .spm files directly, which is what yaku does at runtime.
-CONVERTER_DEPS = ("transformers<5", "torch", "ctranslate2>=4.0", "sentencepiece")
+CONVERTER_DEPS = ("transformers<6", "torch", "ctranslate2>=4.0", "sentencepiece")
 
 REQUIRED_FILES = ("model.bin", "source.spm", "target.spm")
 
