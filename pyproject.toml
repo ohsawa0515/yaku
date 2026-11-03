@@ -70,3 +70,7 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 # Test inputs are real command output, which is as long as it is.
 "tests/*" = ["E501"]
+
+[tool.uv]
+# Matches minimumReleaseAge in renovate.json, which uv does not receive from Renovate.
+exclude-newer = "3 days"
