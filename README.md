@@ -19,6 +19,8 @@ yaku setup --lang ja
 
 `yaku setup` requires uv. Install it and put it on `PATH` before running the command.
 
+yaku supports Python 3.12 to 3.14. sentencepiece has no prebuilt wheel for Python 3.15 yet, so if your default Python is 3.15, pick an older interpreter explicitly, for example `pipx install yaku --python python3.14`.
+
 ## Use
 
 ```console
