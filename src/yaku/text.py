@@ -37,21 +37,50 @@ def _display_width(ch: str) -> int:
 
 
 def _resolve_line(line: str) -> str:
-    cells: list[str] = []
+    # One entry per display column. None marks the second column of a wide
+    # glyph. Escape sequences take no column, so they are kept beside the
+    # column they were written at and survive an overwrite.
+    cells: list[str | None] = []
+    escapes: dict[int, str] = {}
     col = 0
-    for ch in line:
+    pos = 0
+    while pos < len(line):
+        m = ANSI.match(line, pos)
+        if m is not None:
+            escapes[col] = escapes.get(col, "") + m.group(0)
+            pos = m.end()
+            continue
+        ch = line[pos]
+        pos += 1
         if ch == "\x08":
             col = max(0, col - 1)
             continue
         width = _display_width(ch)
         if width == 0:
-            if col > 0 and col <= len(cells):
-                cells[col - 1] += ch
+            if 0 < col <= len(cells) and cells[col - 1] is not None:
+                cells[col - 1] += ch  # type: ignore[operator]
             continue
-        cells.extend(" " * (col - len(cells)))
-        cells[col : col + width] = [ch] + [""] * (width - 1)
+        cells.extend(" " for _ in range(col + width - len(cells)))
+        for c in range(col, col + width):
+            _clear_glyph(cells, c)
+        cells[col : col + width] = [ch] + [None] * (width - 1)
         col += width
-    return "".join(cells)
+    out: list[str] = []
+    for c in range(max(len(cells), max(escapes, default=-1) + 1)):
+        out.append(escapes.get(c, ""))
+        if c < len(cells) and cells[c] is not None:
+            out.append(cells[c])  # type: ignore[arg-type]
+    return "".join(out)
+
+
+def _clear_glyph(cells: list[str | None], col: int) -> None:
+    """Blank every column of the glyph covering ``col``."""
+    start = col - 1 if cells[col] is None else col
+    cells[start] = " "
+    for c in range(start + 1, len(cells)):
+        if cells[c] is not None:
+            break
+        cells[c] = " "
 
 
 def strip_overstrike(text: str) -> str:

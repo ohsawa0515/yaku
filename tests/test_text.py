@@ -220,3 +220,18 @@ def test_overstrike_trailing_backspace_deletes_nothing():
 
     assert strip_overstrike("abc\b") == "abc"
     assert strip_overstrike("abc\b\n\bdef") == "abc\ndef"
+
+
+def test_overstrike_overwriting_half_a_wide_glyph_clears_it():
+    from yaku.text import strip_overstrike
+
+    assert strip_overstrike("字\bA") == " A"
+    assert strip_overstrike("字\b\bA") == "A "
+
+
+def test_overstrike_ignores_escape_sequences_when_counting_columns():
+    from yaku.text import strip_ansi, strip_overstrike
+
+    out = strip_overstrike("\x1b[31m_\x1b[0m\bX")
+    assert strip_ansi(out) == "X"
+    assert out == "\x1b[31mX\x1b[0m"
