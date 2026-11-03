@@ -121,23 +121,6 @@ class Masker:
 
         return self.target.placeholder_pattern.sub(restore, text)
 
-    def reordered(self, source: str, text: str) -> bool:
-        """Whether a sentence that opens with a placeholder lost that opening.
-
-        Swapped placeholders keep every count intact while changing which
-        value the sentence is about ("T1 will replace T2" read as T2 replacing
-        T1), so the loss checks cannot see them. Only the subject position is
-        checked: other reorderings are ordinary Japanese word order.
-        """
-        found = self.target.placeholder_pattern.findall(source)
-        if len(set(found)) < 2:
-            return False
-        first = self.target.placeholder_pattern.search(source)
-        if first is None or source[: first.start()].strip():
-            return False
-        order = [n for n in self.target.placeholder_pattern.findall(text) if n in set(found)]
-        return bool(order) and order[0] != found[0]
-
     def lost(self, text: str, count: int) -> int:
         """Placeholders that did not survive as standalone tokens.
 
