@@ -2,44 +2,20 @@
 
 English | [日本語](README.ja.md)
 
-Fully offline translator for command output. Only the prose gets translated;
-everything else is left verbatim.
+Fully offline translator for command output. Only the prose gets translated; everything else is left verbatim.
 
-```console
-$ man tar | col -bx | yaku
-NAME
-     tar – テープアーカイブを操作する
-
-SYNOPSIS
-     tar [bundled-flags ⟨args⟩] [⟨file⟩ | ⟨pattern⟩ ...]
-     tar {-c} [options] [files | directories]
-
-DESCRIPTION
-     tarはストリーミングアーカイブファイルを作成し、操作します。
-```
-
-Identifiers, flags, paths and quoted strings survive unchanged, because they
-are moved out of the way before the model sees the text and put back
-afterwards. No network access, no API keys, no data leaving the machine.
+Identifiers, flags, paths and quoted strings survive unchanged, because they are moved out of the way before the model sees the text and put back afterwards. No network access, no API keys, no data leaving the machine.
 
 ## Install
 
 ```console
-uv tool install yaku      # or: pipx install yaku
+pip install yaku
 yaku setup --lang ja
 ```
 
-`yaku setup` downloads [FuguMT](https://huggingface.co/staka/fugumt-en-ja) at a
-pinned revision and converts it to a 62 MB int8 model. The model is not
-bundled because it is CC BY-SA 4.0. The converter needs torch, which yaku does
-not depend on, so the conversion runs in a throwaway environment created by
-[uv](https://docs.astral.sh/uv/); uv must be on `PATH`. It takes under a minute
-once the packages are cached, and nothing but the converted model is kept.
+`yaku setup` downloads [FuguMT](https://huggingface.co/staka/fugumt-en-ja) at a pinned revision and converts it to a 62 MB int8 model. The model is not bundled because it is CC BY-SA 4.0. The converter needs torch, which yaku does not depend on, so the conversion runs in a throwaway environment created with [uv](https://docs.astral.sh/uv/).
 
-`yaku --show-paths` prints every location yaku uses. A `models/` directory in
-the working directory is never used: yaku runs wherever you are, and a model
-shipped inside a repository you are browsing must not be loaded. To test a
-checkout against its own model, set `YAKU_MODELS_DIR=models`.
+`yaku setup` requires uv. Install it and put it on `PATH` before running the command.
 
 ## Use
 
@@ -53,7 +29,7 @@ pbpaste | yaku
 Useful options:
 
 | Option | Effect |
-|---|---|
+| --- | --- |
 | `--lang ja` | target language, which also selects the model and thresholds |
 | `--fallback both\|original\|mark` | what to emit for a line that fails the quality check |
 | `--show-reason` | append why a line failed |
@@ -82,34 +58,20 @@ stdout
 
 Two parts carry most of the value.
 
-**Masking** is not about withholding text. A sequence model that has never
-seen `aws_instance.web_server_01` in training will hallucinate around it;
-`T1 will be created` is ordinary English and translates cleanly. Masking also
-cuts the request by 5 to 10 percent in tokens, and a placeholder that fails
-to come back is the only reliable sign that a clause was dropped.
+**Masking** is not about withholding text. A sequence model that has never seen `aws_instance.web_server_01` in training will hallucinate around it; `T1 will be created` is ordinary English and translates cleanly. Masking also cuts the request by 5 to 10 percent in tokens, and a placeholder that fails to come back is the only reliable sign that a clause was dropped.
 
-**The quality check** exists because dropped clauses cannot be prevented.
-Each line is verified afterwards, and anything suspect is shown with its
-original text rather than silently replaced.
+**The quality check** exists because dropped clauses cannot be prevented. Each line is verified afterwards, and anything suspect is shown with its original text rather than silently replaced.
 
 ## Limits
 
-- Translation quality is bounded by a 60M parameter model. It will not match
-  a large language model.
-- Dropped clauses cannot be eliminated, only detected. Roughly 5 to 9
-  percent of translated lines in manual pages are flagged, of which some are
-  real drops and some are Japanese simply being more compact than the ratio
-  check allows.
-- Whether lines are joined is decided once for the whole input. Inside
-  record-per-line output, a paragraph is still rejoined when its lines are
-  filled to the wrap column, but a wrap that lands just before a capitalised
-  word is left split.
+- Translation quality is bounded by a 60M parameter model. It will not match a large language model.
+- Dropped clauses cannot be eliminated, only detected. Roughly 5 to 9 percent of translated lines in manual pages are flagged, of which some are real drops and some are Japanese simply being more compact than the ratio check allows.
+- Whether lines are joined is decided once for the whole input. Inside record-per-line output, a paragraph is still rejoined when its lines are filled to the wrap column, but a wrap that lands just before a capitalised word is left split.
 - Japanese output sometimes loses a space around a restored identifier.
 
 ## Adding a language
 
-`--lang` switches the model and the measured constants together, so a new
-language needs a profile, not just a model.
+`--lang` switches the model and the measured constants together, so a new language needs a profile, not just a model.
 
 1. Pick a CTranslate2-compatible model (Marian and OPUS-MT convert cleanly).
 2. `uv run tools/check_placeholders.py` to choose a placeholder format.
@@ -127,11 +89,8 @@ uv run tools/measure_wrap.py captured-output.txt
 uv run tools/eval_translate.py captured-output.txt
 ```
 
-Rules live in `src/yaku/rules/` as TOML. Users can add their own in
-`~/.config/yaku/rules/` or point `--rules-dir` at a directory; shipped rules
-are never edited in place.
+Rules live in `src/yaku/rules/` as TOML. Users can add their own in `~/.config/yaku/rules/` or point `--rules-dir` at a directory; shipped rules are never edited in place.
 
 ## Licence
 
-MIT. The default model, [FuguMT](https://huggingface.co/staka/fugumt-en-ja),
-is CC BY-SA 4.0 and is downloaded separately.
+MIT. The default model, [FuguMT](https://huggingface.co/staka/fugumt-en-ja), is CC BY-SA 4.0 and is downloaded separately.
