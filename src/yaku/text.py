@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import unicodedata
 
 from yaku.types import SourceProfile
 
@@ -27,6 +28,94 @@ _GUTTER = re.compile(
 
 def strip_ansi(text: str) -> str:
     return ANSI.sub("", text)
+
+
+# Only colour and style sequences describe a state that can be replayed;
+# erase and cursor controls would act a second time.
+_SGR = re.compile(r"\x1B\[[0-9;:]*m")
+
+
+def _display_width(ch: str) -> int:
+    # Not just combining(): many marks (variation selectors, ZWJ, enclosing
+    # marks) have combining class 0 but still take no column.
+    if unicodedata.combining(ch) or unicodedata.category(ch) in ("Mn", "Me", "Cf"):
+        return 0
+    return 2 if unicodedata.east_asian_width(ch) in "WF" else 1
+
+
+def _resolve_line(line: str) -> str:
+    if "\x08" not in line:
+        return line
+    # One entry per display column. None marks the second column of a wide
+    # glyph. Escape sequences take no column, so they are kept beside the
+    # column they were written at and survive an overwrite.
+    cells: list[str | None] = []
+    escapes: dict[int, str] = {}
+    col = 0
+    pos = 0
+    seen: list[str] = []
+    while pos < len(line):
+        m = ANSI.match(line, pos)
+        if m is not None:
+            escapes[col] = escapes.get(col, "") + m.group(0)
+            if _SGR.fullmatch(m.group(0)):
+                seen.append(m.group(0))
+            pos = m.end()
+            continue
+        ch = line[pos]
+        pos += 1
+        if ch == "\x08":
+            col = max(0, col - 1)
+            continue
+        width = _display_width(ch)
+        if width == 0:
+            base = min(col, len(cells)) - 1
+            while base > 0 and cells[base] is None:
+                base -= 1
+            if base >= 0 and cells[base] is not None:
+                cells[base] += ch  # type: ignore[operator]
+            continue
+        cells.extend(" " for _ in range(col + width - len(cells)))
+        for c in range(col, col + width):
+            _clear_glyph(cells, c)
+        cells[col : col + width] = [ch] + [None] * (width - 1)
+        col += width
+    out: list[str] = []
+    for c in range(max(len(cells), max(escapes, default=-1) + 1)):
+        out.append(escapes.get(c, ""))
+        if c < len(cells) and cells[c] is not None:
+            out.append(cells[c])  # type: ignore[arg-type]
+    # Backspacing can place an escape before ones written earlier. When the
+    # order changed, replay the whole sequence so the rendition in effect at
+    # the end of the line is the one the input ended with.
+    result = "".join(out)
+    if [e for e in ANSI.findall(result) if _SGR.fullmatch(e)] != seen:
+        result += "".join(seen)
+    return result
+
+
+def _clear_glyph(cells: list[str | None], col: int) -> None:
+    """Blank every column of the glyph covering ``col``."""
+    start = col - 1 if cells[col] is None else col
+    cells[start] = " "
+    for c in range(start + 1, len(cells)):
+        if cells[c] is not None:
+            break
+        cells[c] = " "
+
+
+def strip_overstrike(text: str) -> str:
+    """Resolve backspace overstrikes the way ``col -b`` does.
+
+    man writes bold as "N\\bN" and underline as "_\\bx". A backspace only moves
+    the cursor, so the text is replayed per line by display column and the
+    last character written to a column wins. Wide characters occupy two
+    columns, which is why a plain "drop the character before the backspace"
+    rule is not enough.
+    """
+    if "\x08" not in text:
+        return text
+    return "\n".join(_resolve_line(line) for line in text.split("\n"))
 
 
 def split_indent(text: str) -> tuple[str, str, str]:

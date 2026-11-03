@@ -178,3 +178,97 @@ def test_osc_hyperlink_is_removed_with_its_payload():
     link = "\x1b]8;;https://example.com\x1b\\docs\x1b]8;;\x1b\\"
     assert strip_ansi(link) == "docs"
     assert strip_ansi("\x1b]8;;https://example.com\x07docs\x1b]8;;\x07") == "docs"
+
+
+def test_overstrike_bold_and_underline_are_removed():
+    from yaku.text import strip_overstrike
+
+    assert strip_overstrike("N\bNA\bAM\bME\bE") == "NAME"
+    assert strip_overstrike("_\bb_\bu_\bn_\bd") == "bund"
+
+
+def test_overstrike_matches_col_b_on_man_output():
+    import shutil
+    import subprocess
+
+    import pytest
+
+    from yaku.text import strip_overstrike
+
+    if shutil.which("col") is None:
+        pytest.skip("col not available")
+    raw = "N\bNA\bAM\bME\bE\n     t\bta\bar\br \x5f\x08b\x5f\x08u\n"
+    expected = subprocess.run(["col", "-bx"], input=raw, capture_output=True, text=True).stdout
+    assert strip_overstrike(raw).split() == expected.split()
+
+
+def test_overstrike_consecutive_backspaces_overwrite_by_column():
+    from yaku.text import strip_overstrike
+
+    assert strip_overstrike("AB\b\bCD") == "CD"
+
+
+def test_overstrike_wide_character_covers_two_columns():
+    from yaku.text import strip_overstrike
+
+    assert strip_overstrike("__\b\b字") == "字"
+    assert strip_overstrike("字\b\b__") == "__"
+
+
+def test_overstrike_trailing_backspace_deletes_nothing():
+    from yaku.text import strip_overstrike
+
+    assert strip_overstrike("abc\b") == "abc"
+    assert strip_overstrike("abc\b\n\bdef") == "abc\ndef"
+
+
+def test_overstrike_overwriting_half_a_wide_glyph_clears_it():
+    from yaku.text import strip_overstrike
+
+    assert strip_overstrike("字\bA") == " A"
+    assert strip_overstrike("字\b\bA") == "A "
+
+
+def test_overstrike_ignores_escape_sequences_when_counting_columns():
+    from yaku.text import strip_ansi, strip_overstrike
+
+    out = strip_overstrike("\x1b[31m_\x1b[0m\bX")
+    assert strip_ansi(out) == "X"
+    assert out == "\x1b[31mX\x1b[0m"
+
+
+def test_overstrike_keeps_combining_marks_after_wide_glyphs():
+    from yaku.text import strip_overstrike
+
+    kana = "が"
+    assert strip_overstrike(kana + "\nN\bN") == kana + "\nN"
+    assert strip_overstrike(kana + "\bX") == " X"
+    assert strip_overstrike("x́\bx") == "x"
+
+
+def test_overstrike_zero_width_marks_do_not_take_a_column():
+    from yaku.text import strip_overstrike
+
+    for mark in ("\u200b", "\ufe0f", "\u20dd"):
+        assert strip_overstrike(f"x{mark}\bx") == "x"
+
+
+def test_overstrike_reordered_escapes_keep_the_final_rendition():
+    from yaku.text import ANSI, strip_ansi, strip_overstrike
+
+    out = strip_overstrike("ab\x1b[0m\b\b\x1b[31m\x1b[1mX")
+    assert strip_ansi(out) == "Xb"
+    # The reset comes first, then colour and bold: both must be in effect.
+    assert ANSI.findall(out)[-3:] == ["\x1b[0m", "\x1b[31m", "\x1b[1m"]
+    # A reset written last must stay last.
+    assert ANSI.findall(strip_overstrike("\x1b[31mab\x1b[0m\b\bX"))[-1] == "\x1b[0m"
+    # Untouched order is left alone.
+    assert strip_overstrike("\x1b[31m_\x1b[0m\bX") == "\x1b[31mX\x1b[0m"
+
+
+def test_overstrike_replay_does_not_repeat_erase_controls():
+    from yaku.text import strip_overstrike
+
+    out = strip_overstrike("\x1b[2Kab\x1b[0m\b\b\x1b[31mX")
+    assert out.count("\x1b[2K") == 1
+    assert out.endswith("\x1b[0m\x1b[31m")
