@@ -180,12 +180,15 @@ class Pipeline:
         )
 
     def prepare(self, raw_lines: Sequence[str]) -> list[Line]:
+        # An explicit request is final; local joining of wrapped paragraphs
+        # only supplements automatic detection.
+        automatic = self.join is None
         if self.join is None:
             ratio = self.wrap_ratio(raw_lines)
             self.stats.wrap_ratio = ratio
             self.join = ratio >= WRAP_THRESHOLD
         self.stats.joined = self.join
-        width = 0 if self.join else self._wrap_width(raw_lines)
+        width = self._wrap_width(raw_lines) if automatic and not self.join else 0
 
         out: list[Line] = []
         pending: list[_Pending] = []
@@ -278,7 +281,7 @@ class Pipeline:
     # -- translation ------------------------------------------------------
 
     def run(self, lines: Sequence[Line]) -> None:
-        pending: list[tuple[Line, int, str]] = []
+        pending: dict[str, list[tuple[Line, int]]] = {}
         for line in lines:
             if not line.translatable:
                 continue
@@ -290,13 +293,16 @@ class Pipeline:
                     line.segment_results[index] = hit
                     self.stats.cached += 1
                 else:
-                    pending.append((line, index, segment))
+                    pending.setdefault(segment, []).append((line, index))
 
         if pending:
+            # Each distinct segment is translated once and shared by every
+            # place it occurs.
             self.stats.requested = len(pending)
-            outputs = self.engine.translate([p[2] for p in pending])
-            for (line, index, segment), output in zip(pending, outputs, strict=True):
-                line.segment_results[index] = output
+            outputs = self.engine.translate(list(pending))
+            for (segment, places), output in zip(pending.items(), outputs, strict=True):
+                for line, index in places:
+                    line.segment_results[index] = output
                 self.cache.put(segment, output)
             self.cache.commit()
 
@@ -358,7 +364,7 @@ class Pipeline:
         """Wrap units to the requested width; a unit is never split."""
         if self.width <= 0:
             return [indent + "".join(units)]
-        room = max(self.width - len(indent), 20)
+        room = max(self.width - len(indent), 1)
         out: list[str] = []
         current = ""
         for index, unit in enumerate(units):

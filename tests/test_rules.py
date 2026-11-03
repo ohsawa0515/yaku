@@ -284,3 +284,22 @@ def test_skipped_glued_match_leaves_existing_placeholders_intact(mask_rules, jap
     masker = Masker(rules=mask_rules, target=japanese)
     masked, values = masker.mask("Read config/T2/file before starting.")
     assert masker.unmask(masked, values) == "Read config/T2/file before starting."
+
+
+def test_touching_matches_become_one_value(mask_rules, japanese):
+    masker = Masker(rules=mask_rules, target=japanese)
+    for text in ("Read the [first][second] entries now.", 'Use "a b""c d" as the value.'):
+        masked, values = masker.mask(text)
+        assert len(values) == 1
+        assert masker.unmask(masked, values) == text
+        assert masker.lost(masked, len(values)) == 0
+
+
+def test_words_that_resemble_placeholders_are_not_damage(mask_rules, japanese):
+    masker = Masker(rules=mask_rules, target=japanese)
+    text = "The ext4 filesystem is supported with --force."
+    masked, values = masker.mask(text)
+    translated = masked.replace("is supported", "に対応")
+    assert masker.residue(translated, len(values), masked) == 0
+    assert masker.residue(translated, len(values)) == 1
+    assert masker.unmask(masked, values) == text

@@ -40,7 +40,7 @@ def judge(
         if lost:
             return Verdict(False, f"placeholder lost ({lost}/{placeholders})")
 
-        extra = masker.residue(translated, placeholders)
+        extra = masker.residue(translated, placeholders, source)
         if extra:
             return Verdict(False, f"placeholder residue ({extra})")
 

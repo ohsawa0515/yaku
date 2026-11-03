@@ -44,7 +44,7 @@ def main() -> int:
             source=source,
             target=target,
             passthrough=load_passthrough(),
-            cache=Cache(paths.cache_path(), f"{target.model_name}:ratio"),
+            cache=Cache(None, "ratio"),
         )
         lines = pipeline.prepare(path.read_text(errors="replace").splitlines())
         pipeline.run(lines)

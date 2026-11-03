@@ -170,3 +170,11 @@ def test_a_number_that_is_not_a_time_is_not_a_prefix():
     from yaku.text import split_gutter
 
     assert split_gutter("15:   content = x") == ("", "15:   content = x")
+
+
+def test_osc_hyperlink_is_removed_with_its_payload():
+    from yaku.text import strip_ansi
+
+    link = "\x1b]8;;https://example.com\x1b\\docs\x1b]8;;\x1b\\"
+    assert strip_ansi(link) == "docs"
+    assert strip_ansi("\x1b]8;;https://example.com\x07docs\x1b]8;;\x07") == "docs"

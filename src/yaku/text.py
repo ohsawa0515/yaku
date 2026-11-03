@@ -6,8 +6,10 @@ import re
 
 from yaku.types import SourceProfile
 
-# CSI sequences plus the shorter two-character escapes.
-ANSI = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
+# OSC sequences (BEL- or ST-terminated, such as hyperlinks), CSI sequences,
+# and the shorter two-character escapes. OSC comes first: its introducer
+# is also a valid two-character escape.
+ANSI = re.compile(r"\x1B(?:\][^\x07\x1B]*(?:\x07|\x1B\\)|[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
 
 _INDENT = re.compile(r"^(\s*)(.*?)(\s*)$", re.DOTALL)
 

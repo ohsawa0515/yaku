@@ -15,6 +15,15 @@ from functools import partial
 from yaku.types import MaskRule, TargetProfile
 
 _CLOSING = ".,;:"
+_WORD = re.compile(r"\w+")
+
+
+@dataclass
+class _Adjacency:
+    """Where the previous match of the current rule ended."""
+
+    end: int = -1
+    index: int | None = None
 
 
 def _at_break(text: str, end: int) -> bool:
@@ -48,7 +57,7 @@ class Masker:
             values.append(m.group(0))
             return self.target.placeholder(len(values))
 
-        def replace(m: re.Match[str], encloses: bool) -> str:
+        def replace(m: re.Match[str], encloses: bool, adjacent: _Adjacency) -> str:
             span = m.group(0)
             holds_placeholder = self.target.placeholder_pattern.search(span) is not None
             # A span holding a placeholder was produced by an earlier rule.
@@ -69,12 +78,24 @@ class Masker:
             tail = ""
             if len(span) > 1 and span[-1] in _CLOSING and _at_break(m.string, m.end()):
                 span, tail = span[:-1], span[-1]
-            values.append(span)
-            return self.target.placeholder(len(values)) + tail
+            # Two placeholders that touch would read as one unknown token, so
+            # touching matches of one rule become a single value.
+            if adjacent.end == m.start() and adjacent.index is not None:
+                values[adjacent.index] += span
+                placeholder = ""
+            else:
+                values.append(span)
+                adjacent.index = len(values) - 1
+                placeholder = self.target.placeholder(len(values))
+            adjacent.end = m.end() if not tail else -1
+            return placeholder + tail
 
         masked = self.target.placeholder_pattern.sub(keep_literal, text)
         for rule in self._active:
-            masked = rule.pattern.sub(partial(replace, encloses=rule.encloses), masked)
+            adjacent = _Adjacency()
+            masked = rule.pattern.sub(
+                partial(replace, encloses=rule.encloses, adjacent=adjacent), masked
+            )
         return self._compact(masked, values)
 
     def _compact(self, masked: str, values: list[str]) -> tuple[str, list[str]]:
@@ -111,12 +132,21 @@ class Masker:
         intact = {int(n) for n in self.target.placeholder_pattern.findall(text)}
         return sum(1 for i in range(1, count + 1) if i not in intact)
 
-    def residue(self, text: str, count: int) -> int:
+    def residue(self, text: str, count: int, source: str = "") -> int:
         """Placeholder-like text that cannot be restored.
 
         Counts numbers that were never issued, repeats of one that was, and
-        damaged forms such as a lower-cased or word-fused placeholder.
+        damaged forms such as a lower-cased or word-fused placeholder. Words
+        that were already in the source, such as "ext4", are not damage.
         """
+        known = {
+            w
+            for w in _WORD.findall(source)
+            if self.target.placeholder_loose.search(w)
+            and not self.target.placeholder_pattern.fullmatch(w)
+        }
+        if known:
+            text = _WORD.sub(lambda m: " " if m[0] in known else m[0], text)
         intact = Counter(int(n) for n in self.target.placeholder_pattern.findall(text))
         if count == 0:
             # Nothing was issued, so any standalone placeholder is invented.

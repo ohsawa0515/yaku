@@ -40,6 +40,17 @@ ARGUMENT = re.compile(
     r"|[|(){}])"
 )
 
+# Function words that a command line rarely contains twice over.
+_PROSE_WORD = re.compile(
+    r"\b(?:the|an?|to|is|are|of|for|and|or|that|this|with|in|on|it|be|as|by|from|when|which)\b"
+)
+_SENTENCE_END = re.compile(r"[.!?]\s*$")
+
+
+def _reads_as_sentence(text: str) -> bool:
+    return _SENTENCE_END.search(text) is not None and len(_PROSE_WORD.findall(text)) >= 2
+
+
 SYMBOL = re.compile(r"[|=\[\]{}<>/\\]")
 SYMBOL_DENSITY = 0.12
 
@@ -60,8 +71,10 @@ def looks_like_command(body: str) -> bool:
         return True
 
     name = COMMAND_NAME.match(body)
-    if name is not None and ARGUMENT.search(body[name.end() :]):
-        return True
+    if name is not None:
+        rest = body[name.end() :]
+        if ARGUMENT.search(rest) and not _reads_as_sentence(rest):
+            return True
 
     if body.count("|") >= 2 or body.count("=") >= 2:
         return True

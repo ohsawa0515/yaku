@@ -63,16 +63,30 @@ def test_record_per_line_output_is_not_joined(make):
 
 def test_wrapped_paragraph_is_joined_inside_unjoined_input(make):
     raw = [
+        "Terraform will perform the following actions:",
+        "Plan: 4 to add, 0 to change, 0 to destroy.",
+        "Changes to Outputs:",
         "Error: Value for undeclared variable",
         "",
         'A variable named "unknown" was assigned on the command line, but the root',
         "module does not declare a variable of that name. To use this value, add a",
         '"variable" block to the configuration.',
     ]
-    pipeline = make(join=False)
+    pipeline = make()
     lines = pipeline.prepare(raw)
+    assert not pipeline.stats.joined
     assert bodies(lines)[-1].startswith("A variable named")
     assert bodies(lines)[-1].endswith("block to the configuration.")
+
+
+def test_explicit_no_join_never_joins_lines(make):
+    raw = [
+        'A variable named "unknown" was assigned on the command line, but the root',
+        "module does not declare a variable of that name. To use this value, add a",
+        '"variable" block to the configuration.',
+    ]
+    lines = make(join=False).prepare(raw)
+    assert len(bodies(lines)) == 3
 
 
 def test_short_unfinished_lines_stay_separate(make):
@@ -113,7 +127,7 @@ def test_cache_answers_a_repeated_segment(make, tmp_path):
     raw = ["The archive was created successfully on disk."] * 3
     lines = pipeline.prepare(raw)
     pipeline.run(lines)
-    assert pipeline.engine.calls == [["The archive was created successfully on disk."] * 3]
+    assert pipeline.engine.calls == [["The archive was created successfully on disk."]]
 
     second = make(join=False)
     second.cache = pipeline.cache
@@ -255,3 +269,19 @@ def test_width_never_splits_a_protected_value(make):
     pipeline.run(lines)
     out = pipeline.render(lines[0])
     assert any('"/tmp/a directory with spaces/config.json"' in line for line in out)
+
+
+def test_repeated_segment_is_requested_once_per_invocation(make):
+    pipeline = make(join=False)
+    raw = ["The archive was created successfully on disk."] * 3
+    lines = pipeline.prepare(raw)
+    pipeline.run(lines)
+    assert pipeline.engine.calls == [["The archive was created successfully on disk."]]
+    assert all(line.segment_results for line in lines)
+
+
+def test_width_below_twenty_is_respected(make):
+    pipeline = make()
+    pipeline.width = 10
+    out = pipeline._wrap("あ" * 30, "")
+    assert max(len(line) for line in out) <= 10

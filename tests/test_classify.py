@@ -52,3 +52,11 @@ def test_shell_line_continuation_is_a_command():
 
 def test_sentence_starting_with_a_manual_reference_is_prose():
     assert not looks_like_command("tar(1) describes the supported archive formats.")
+
+
+def test_prose_with_a_flag_is_not_a_command():
+    assert not looks_like_command("tar supports --create to create an archive.")
+
+
+def test_command_with_flags_is_still_a_command():
+    assert looks_like_command("tar --create --file archive.tar src/")
