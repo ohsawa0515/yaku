@@ -1,12 +1,12 @@
 [[rule]]
 name    = "TFADDR"
 order   = 50
-pattern = '\b(?:module|data|resource|var|local)\.[\w\-\.\[\]"]+'
+pattern = '''\b(?:module|data|resource|var|local)\.(?:[\w\-\.]|\[(?:"(?:[^"\\\n]|\\.)*"|\d+|\*)\])+'''
 
 [[rule]]
 name    = "RESOURCE"
 order   = 70
-pattern = '\b[a-z][a-z0-9]*_[a-z0-9_]+(?:\.[A-Za-z0-9_\-\.\[\]"]+)+'
+pattern = '''\b[a-z][a-z0-9]*_[a-z0-9_]+(?:\.(?:[\w\-\.]|\[(?:"(?:[^"\\\n]|\\.)*"|\d+|\*)\])+)+'''
 
 [[passthrough]]
 name    = "diff-line"

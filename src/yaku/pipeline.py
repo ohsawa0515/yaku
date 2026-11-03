@@ -44,6 +44,8 @@ _NO_LINE_START = "、。，．・：；？！」』）】〕〉》ー,.:;?!)]}"
 # A log record after its timestamp: "- MainThread - botocore - DEBUG - ...",
 # "[ERROR] vertex ...". Each record stands alone and is never joined.
 _LOG_LEVEL = re.compile(r"^\[?(?:TRACE|DEBUG|INFO|WARN(?:ING)?|ERROR|FATAL)\]?[\s:]")
+# The first line of a manual page option entry: "-c, --create", "--format fmt".
+_OPTION_ENTRY = re.compile(r"^-{1,2}[A-Za-z0-9][\w\-]*(?:[\s,=\[]|$)")
 _LOG_DASH = re.compile(r"^-\s")
 
 # Inside a Python traceback every indented line is a frame or source code.
@@ -226,10 +228,13 @@ class Pipeline:
                 or bool(_LOG_LEVEL.match(body))
                 or (any(c.isdigit() for c in indent) and bool(_LOG_DASH.match(body)))
             )
-            # A timestamp that differs from the one above starts a new record
-            # even when the line carries no log level.
-            if pending and any(c.isdigit() for c in indent) and indent != pending[-1].indent:
-                record = True
+            # A timestamped line starts a new record even without a log level
+            # and even when the second matches the one above. Only a framed
+            # line (a terraform diagnostic) continues under one timestamp.
+            if pending and any(c.isdigit() for c in indent):
+                framed = "│" in indent or "┃" in indent
+                if not framed or indent != pending[-1].indent:
+                    record = True
             if record:
                 flush()
             current = _Pending(raw, plain, indent, body, trailing)
@@ -261,7 +266,7 @@ class Pipeline:
                     # the line that starts the sentence, so indentation only
                     # ends a paragraph once the previous line also finished.
                     finished = bool(self.source.sentence_end.search(pending[-1].body))
-                    if finished and pending[0].indent != indent:
+                    if finished and (pending[0].indent != indent or _OPTION_ENTRY.match(body)):
                         flush()
                 elif not wraps:
                     flush()
@@ -321,7 +326,8 @@ class Pipeline:
         them leaves the concatenated length plausible.
         """
         for segment, result in zip(line.segments, line.segment_results, strict=True):
-            verdict = judge(segment, result, None, self.masker, self.target)
+            own = {int(n) for n in self.target.placeholder_pattern.findall(segment)}
+            verdict = judge(segment, result, own, self.masker, self.target)
             if not verdict.ok:
                 return verdict
         if line.result is None:

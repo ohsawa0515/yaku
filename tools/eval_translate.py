@@ -114,7 +114,7 @@ def main() -> int:
 
             if line.result is not None:
                 lost = masker.lost(line.result, len(line.values))
-                extra = masker.residue(line.result, len(line.values))
+                extra = masker.residue(line.result, len(line.values), line.masked)
                 if lost or extra:
                     failures += 1
             if not line.verdict.ok:

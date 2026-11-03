@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import re
 from collections import Counter
+from collections.abc import Collection
 from dataclasses import dataclass, field
 from functools import partial
 
@@ -16,6 +17,11 @@ from yaku.types import MaskRule, TargetProfile
 
 _CLOSING = ".,;:"
 _WORD = re.compile(r"[A-Za-z0-9_]+")
+
+
+def _numbers(issued: int | Collection[int]) -> Collection[int]:
+    """Placeholder numbers: 1..n for a count, or the given numbers."""
+    return range(1, issued + 1) if isinstance(issued, int) else issued
 
 
 @dataclass
@@ -121,7 +127,7 @@ class Masker:
 
         return self.target.placeholder_pattern.sub(restore, text)
 
-    def lost(self, text: str, count: int) -> int:
+    def lost(self, text: str, issued: int | Collection[int]) -> int:
         """Placeholders that did not survive as standalone tokens.
 
         A placeholder vanishes when the clause around it was not translated,
@@ -130,9 +136,9 @@ class Masker:
         value, so only a whole-token match counts as restored.
         """
         intact = {int(n) for n in self.target.placeholder_pattern.findall(text)}
-        return sum(1 for i in range(1, count + 1) if i not in intact)
+        return sum(1 for i in _numbers(issued) if i not in intact)
 
-    def residue(self, text: str, count: int, source: str = "") -> int:
+    def residue(self, text: str, issued: int | Collection[int], source: str = "") -> int:
         """Placeholder-like text that cannot be restored.
 
         Counts numbers that were never issued, repeats of one that was, and
@@ -147,15 +153,16 @@ class Masker:
         }
         if known:
             text = _WORD.sub(lambda m: " " if m[0] in known else m[0], text)
+        allowed = set(_numbers(issued))
         intact = Counter(int(n) for n in self.target.placeholder_pattern.findall(text))
-        if count == 0:
+        if not allowed:
             # Nothing was issued, so any standalone placeholder is invented.
             # The loose form is not used: it matches inside ordinary words.
             return sum(intact.values())
         every = Counter(int(n) for n in self.target.placeholder_loose.findall(text))
         extra = 0
         for number, times in every.items():
-            if not 1 <= number <= count:
+            if number not in allowed:
                 extra += times
             else:
                 extra += times - min(intact[number], 1)

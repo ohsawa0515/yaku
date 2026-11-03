@@ -285,3 +285,34 @@ def test_width_below_twenty_is_respected(make):
     pipeline.width = 10
     out = pipeline._wrap("あ" * 30, "")
     assert max(len(line) for line in out) <= 10
+
+
+def test_swapped_placeholders_between_segments_are_flagged(make):
+    class SwapEngine:
+        def translate(self, texts):
+            return ["T2 を開始前に読みます。", "終了後に T1 を削除します。"][: len(texts)]
+
+    pipeline = make(join=False)
+    pipeline.engine = SwapEngine()
+    lines = pipeline.prepare(
+        ["Read /etc/a.conf before starting. Delete /etc/b.conf after finishing."]
+    )
+    pipeline.run(lines)
+    assert not lines[0].verdict.ok
+
+
+def test_equal_timestamps_still_separate_records(make):
+    raw = [
+        "13:17:22 Waiting for the database to accept connections",
+        "13:17:22 Connection was refused by the server",
+    ]
+    assert len(bodies(make(join=True).prepare(raw))) == 2
+
+
+def test_option_entry_after_a_finished_description_starts_a_record(make):
+    raw = [
+        "     -c      Create a new archive containing the specified items and write",
+        "             them out in the given directories.",
+        "     -x      Extract to disk from the archive and keep the original file times.",
+    ]
+    assert len(bodies(make(join=True).prepare(raw))) == 2

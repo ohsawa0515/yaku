@@ -70,6 +70,13 @@ def test_invented_placeholder_is_caught_when_none_were_issued(masker, japanese):
     assert not verdict.ok
 
 
-def test_placeholders_are_not_checked_for_uncounted_fragments(masker, japanese):
-    verdict = judge("Create a new archive.", "T1 が作成されます。", None, masker, japanese)
+def test_placeholder_of_another_segment_fails(masker, japanese):
+    verdict = judge("Read T1 before starting.", "T2 を開始前に読みます。", {1}, masker, japanese)
+    assert not verdict.ok
+
+
+def test_segment_with_its_own_placeholder_passes(masker, japanese):
+    verdict = judge(
+        "Delete T2 after finishing.", "終了後に T2 を削除します。", {2}, masker, japanese
+    )
     assert verdict.ok

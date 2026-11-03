@@ -7,6 +7,7 @@ checked afterwards and the caller decides what to show.
 from __future__ import annotations
 
 import re
+from collections.abc import Collection
 
 from yaku.masking import Masker
 from yaku.types import OK, TargetProfile, Verdict
@@ -19,7 +20,7 @@ _REPETITION = re.compile(r"(.{4,20}?)\1{3,}")
 def judge(
     source: str,
     translated: str,
-    placeholders: int | None,
+    placeholders: int | Collection[int],
     masker: Masker,
     target: TargetProfile,
 ) -> Verdict:
@@ -29,20 +30,20 @@ def judge(
     that a clause went missing; the length ratio catches drops that happened
     to take no placeholder with them.
 
-    ``placeholders`` is how many were issued for this text, or None when the
-    text is a fragment whose placeholders cannot be counted.
+    ``placeholders`` is how many were issued for this text, or the numbers
+    that belong to it when the text is one segment of a larger line.
     """
     if not translated.strip():
         return Verdict(False, "empty output")
 
-    if placeholders is not None:
-        lost = masker.lost(translated, placeholders)
-        if lost:
-            return Verdict(False, f"placeholder lost ({lost}/{placeholders})")
+    lost = masker.lost(translated, placeholders)
+    if lost:
+        expected = placeholders if isinstance(placeholders, int) else len(placeholders)
+        return Verdict(False, f"placeholder lost ({lost}/{expected})")
 
-        extra = masker.residue(translated, placeholders, source)
-        if extra:
-            return Verdict(False, f"placeholder residue ({extra})")
+    extra = masker.residue(translated, placeholders, source)
+    if extra:
+        return Verdict(False, f"placeholder residue ({extra})")
 
     ratio = len(translated) / max(len(source), 1)
     if ratio < target.min_ratio:

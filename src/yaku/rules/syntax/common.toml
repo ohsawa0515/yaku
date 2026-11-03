@@ -33,7 +33,7 @@ pattern = '"[^"\n]{1,60}"(?:\."[^"\n]{1,60}")+'
 name    = "QUOTED"
 order   = 15
 encloses = true
-pattern = '''(?<![\w\[])(["'`])(?:(?!\1)[^\n]){1,60}\1(?!\w)'''
+pattern = '''(?<![\w\[])(["'`])(?:(?!\1)[^\n])+\1(?!\w)'''
 
 # Paths are taken before the dotted-name rules (TFADDR, RESOURCE): a path
 # component such as ssh_config.d or data.json would otherwise be masked on

@@ -310,3 +310,21 @@ def test_source_word_is_recognised_next_to_japanese_text(mask_rules, japanese):
     masked, values = masker.mask("The ext4 filesystem is supported with --force.")
     translated = "ext4ファイルシステムはT1に対応しています。"
     assert masker.residue(translated, len(values), masked) == 0
+
+
+def test_long_quoted_literal_is_masked_whole(mask_rules, japanese):
+    masker = Masker(rules=mask_rules, target=japanese)
+    quoted = '"' + "connection  refused by the remote server while opening the stream " * 2 + '"'
+    _, values = masker.mask(f"The message {quoted} is printed.")
+    assert values == [quoted]
+
+
+def test_terraform_index_keys_are_part_of_the_address(mask_rules, japanese):
+    masker = Masker(rules=mask_rules, target=japanese)
+    for address in (
+        'module.x.aws_s3_bucket.b["logs/archive"]',
+        'aws_instance.web["a key"]',
+        "aws_instance.web[0]",
+    ):
+        _, values = masker.mask(f"{address} will be created")
+        assert values == [address]
