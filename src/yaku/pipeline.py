@@ -40,10 +40,26 @@ _SPACES = re.compile(r"\s{2,}")
 
 # A log record after its timestamp: "- MainThread - botocore - DEBUG - ...",
 # "[ERROR] vertex ...". Each record stands alone and is never joined.
-_LOG_RECORD = re.compile(r"^(?:-\s|\[?(?:TRACE|DEBUG|INFO|WARN(?:ING)?|ERROR|FATAL)\]?[\s:])")
+_LOG_LEVEL = re.compile(r"^\[?(?:TRACE|DEBUG|INFO|WARN(?:ING)?|ERROR|FATAL)\]?[\s:]")
+_LOG_DASH = re.compile(r"^-\s")
 
 # Inside a Python traceback every indented line is a frame or source code.
 _TRACEBACK = re.compile(r"^\s*Traceback \(most recent call last\):\s*$")
+
+
+def _join_segments(results: Sequence[str]) -> str:
+    """Concatenate translated segments, keeping ASCII words apart.
+
+    Japanese needs no separator, but a segment ending in a placeholder next to
+    one that starts with another would otherwise fuse into one token.
+    """
+    out = ""
+    for result in results:
+        head = result[:1]
+        if out and out[-1].isascii() and out[-1].isalnum() and head.isascii() and head.isalnum():
+            out += " "
+        out += result
+    return out
 
 
 @dataclass(frozen=True)
@@ -199,8 +215,10 @@ class Pipeline:
             # A digit in the prefix means a timestamp was split off the line.
             # Lines of a traceback are records too: none of them continues
             # the sentence above.
-            record = in_traceback or (
-                any(c.isdigit() for c in indent) and bool(_LOG_RECORD.match(body))
+            record = (
+                in_traceback
+                or bool(_LOG_LEVEL.match(body))
+                or (any(c.isdigit() for c in indent) and bool(_LOG_DASH.match(body)))
             )
             if record:
                 flush()
@@ -278,7 +296,7 @@ class Pipeline:
         for line in lines:
             if not line.translatable:
                 continue
-            line.result = "".join(line.segment_results)
+            line.result = _join_segments(line.segment_results)
             line.verdict = self._verdict(line)
             if not line.verdict.ok:
                 self.stats.flagged += 1
@@ -290,7 +308,7 @@ class Pipeline:
         them leaves the concatenated length plausible.
         """
         for segment, result in zip(line.segments, line.segment_results, strict=True):
-            verdict = judge(segment, result, 0, self.masker, self.target)
+            verdict = judge(segment, result, None, self.masker, self.target)
             if not verdict.ok:
                 return verdict
         if line.result is None:

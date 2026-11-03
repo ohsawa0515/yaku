@@ -19,7 +19,7 @@ _REPETITION = re.compile(r"(.{4,20}?)\1{3,}")
 def judge(
     source: str,
     translated: str,
-    placeholders: int,
+    placeholders: int | None,
     masker: Masker,
     target: TargetProfile,
 ) -> Verdict:
@@ -28,15 +28,18 @@ def judge(
     Three independent signals, cheapest first. A lost placeholder is proof
     that a clause went missing; the length ratio catches drops that happened
     to take no placeholder with them.
+
+    ``placeholders`` is how many were issued for this text, or None when the
+    text is a fragment whose placeholders cannot be counted.
     """
     if not translated.strip():
         return Verdict(False, "empty output")
 
-    lost = masker.lost(translated, placeholders)
-    if lost:
-        return Verdict(False, f"placeholder lost ({lost}/{placeholders})")
+    if placeholders is not None:
+        lost = masker.lost(translated, placeholders)
+        if lost:
+            return Verdict(False, f"placeholder lost ({lost}/{placeholders})")
 
-    if placeholders:
         extra = masker.residue(translated, placeholders)
         if extra:
             return Verdict(False, f"placeholder residue ({extra})")

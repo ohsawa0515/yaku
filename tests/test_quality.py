@@ -63,3 +63,13 @@ def test_repetition_loop_fails(masker, japanese):
 def test_ratio_bounds_come_from_the_target_profile(japanese):
     assert japanese.min_ratio == 0.35
     assert japanese.max_ratio == 2.5
+
+
+def test_invented_placeholder_is_caught_when_none_were_issued(masker, japanese):
+    verdict = judge("Create a new archive.", "T1 が作成されます。", 0, masker, japanese)
+    assert not verdict.ok
+
+
+def test_placeholders_are_not_checked_for_uncounted_fragments(masker, japanese):
+    verdict = judge("Create a new archive.", "T1 が作成されます。", None, masker, japanese)
+    assert verdict.ok

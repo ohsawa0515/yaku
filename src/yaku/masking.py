@@ -103,6 +103,10 @@ class Masker:
         damaged forms such as a lower-cased or word-fused placeholder.
         """
         intact = Counter(self.target.placeholder_pattern.findall(text))
+        if count == 0:
+            # Nothing was issued, so any standalone placeholder is invented.
+            # The loose form is not used: it matches inside ordinary words.
+            return sum(intact.values())
         every = Counter(self.target.placeholder_loose.findall(text))
         extra = 0
         for number, times in every.items():

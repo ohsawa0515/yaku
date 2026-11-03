@@ -23,14 +23,16 @@ pattern = '\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b'
 
 [[rule]]
 name    = "DOTQUOTED"
-order   = 60
+order   = 12
 pattern = '"[^"\n]{1,60}"(?:\."[^"\n]{1,60}")+'
 
-# A quoted span is taken whole, before the tokens inside it (flags, paths).
+# A quoted span is taken whole, before the tokens inside it (URLs, paths,
+# flags). The delimiters must match, an apostrophe inside a word does not open
+# a span, and an index such as ["key"] belongs to its address (TFADDR).
 [[rule]]
 name    = "QUOTED"
-order   = 65
-pattern = '''["'`][^"'`\n]{1,60}["'`]'''
+order   = 15
+pattern = '''(?<![\w\[])(["'`])(?:(?!\1)[^\n]){1,60}\1(?!\w)'''
 
 # Paths are taken before the dotted-name rules (TFADDR, RESOURCE): a path
 # component such as ssh_config.d or data.json would otherwise be masked on
@@ -163,4 +165,4 @@ pattern = '^\s*[a-z][a-z0-9\-]*:\S+\s*$'
 
 [[passthrough]]
 name    = "stack-frame"
-pattern = '^\s*(?:at |from |File ")'
+pattern = '''^\s*(?:at\s+\S+(?:\s*\([^)]*\)|:\d+(?::\d+)?)|from\s+\S+:\d+|File\s+"[^"]+",\s+line\s+\d+)'''

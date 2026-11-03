@@ -221,3 +221,40 @@ def test_quoted_span_is_masked_whole(mask_rules, japanese):
     masked, values = Masker(rules=mask_rules, target=japanese).mask('the "old --force mode" flag')
     assert masked == "the T1 flag"
     assert values == ['"old --force mode"']
+
+
+def test_quoted_span_keeps_path_and_spacing_inside(mask_rules, japanese):
+    masker = Masker(rules=mask_rules, target=japanese)
+    masked, values = masker.mask('run "copy  /etc/hosts  now" first')
+    assert masked == "run T1 first"
+    assert values == ['"copy  /etc/hosts  now"']
+
+
+def test_apostrophes_do_not_open_a_quoted_span(mask_rules, japanese):
+    masker = Masker(rules=mask_rules, target=japanese)
+    masked, values = masker.mask("Don't use 'config' while the user's file is open.")
+    assert values == ["'config'"]
+    assert masked.startswith("Don't use T1 while")
+
+
+def test_quoted_span_allows_other_quote_types_inside(mask_rules, japanese):
+    masker = Masker(rules=mask_rules, target=japanese)
+    _, values = masker.mask('say "can\'t  stop now" twice')
+    assert values == ['"can\'t  stop now"']
+
+
+def test_index_quote_stays_in_its_terraform_address(mask_rules, japanese):
+    masker = Masker(rules=mask_rules, target=japanese)
+    _, values = masker.mask('module.x.aws_s3_bucket.b["logs"] will be created')
+    assert values == ['module.x.aws_s3_bucket.b["logs"]']
+
+
+def test_stack_frame_rule_ignores_wrapped_prose(passthrough):
+    assert not is_passthrough("from the given files and directories.", passthrough)
+    assert not is_passthrough("at least one archive must be named.", passthrough)
+
+
+def test_stack_frame_rule_matches_frames(passthrough):
+    assert is_passthrough("    at com.example.Main.run(Main.java:12)", passthrough)
+    assert is_passthrough('  File "/app/main.py", line 3, in <module>', passthrough)
+    assert is_passthrough("    at /app/index.js:10:5", passthrough)

@@ -204,3 +204,19 @@ def test_line_that_is_already_translated_is_not_absorbed(make):
     ]
     lines = make(join=True).prepare(raw)
     assert [line.translatable for line in lines] == [True, False]
+
+
+def test_log_records_without_timestamps_are_not_joined(make):
+    raw = [
+        "[INFO] Starting the service using the default configuration",
+        "[INFO] Waiting for the service to accept incoming connections",
+    ]
+    lines = make(join=True).prepare(raw)
+    assert len(bodies(lines)) == 2
+
+
+def test_adjacent_placeholders_in_segments_stay_apart():
+    from yaku.pipeline import _join_segments
+
+    assert _join_segments(["作成 T1", "T2 を削除"]) == "作成 T1 T2 を削除"
+    assert _join_segments(["作成します。", "削除します。"]) == "作成します。削除します。"
