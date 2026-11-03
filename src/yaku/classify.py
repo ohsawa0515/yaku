@@ -7,7 +7,6 @@ from collections.abc import Sequence
 
 from yaku.types import SourceProfile, TargetProfile
 
-# A shell prompt makes the rest of the line a command whatever it contains.
 # A shell prompt makes the rest of the line a command whatever it contains:
 # "$ tar ...", "root@host:/path# kubectl ...", "➜  ~ kubectl ...".
 PROMPT = re.compile(r"^\s*(?:[$#>]|➜|\S+@[\w.\-]+(?::\S*|\s+\S+)?\s?[#$%])\s+\S")
@@ -28,7 +27,7 @@ SHELL_CONTROL = re.compile(
 COMMAND_NAME = re.compile(
     r"^\s*(?:tar|cd|cat|ls|cp|mv|rm|git|docker|kubectl|aws|terraform"
     r"|curl|wget|echo|find|grep|sed|awk|make|npm|pip|uv|python|ruby|go"
-    r"|sudo|export|systemctl|journalctl|touch|mkdir|chmod|chown|ln|sh|bash)\b"
+    r"|sudo|export|systemctl|journalctl|touch|mkdir|chmod|chown|ln|sh|bash)\b(?!\(\d)"
 )
 
 # A command name alone is not enough. Documentation says things like

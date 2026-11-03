@@ -38,6 +38,9 @@ WRAPPED_LINE_SHARE = 0.85
 
 _SPACES = re.compile(r"\s{2,}")
 
+# Characters that may not begin a line of Japanese text.
+_NO_LINE_START = "、。，．・：；？！」』）】〕〉》ー,.:;?!)]}"
+
 # A log record after its timestamp: "- MainThread - botocore - DEBUG - ...",
 # "[ERROR] vertex ...". Each record stands alone and is never joined.
 _LOG_LEVEL = re.compile(r"^\[?(?:TRACE|DEBUG|INFO|WARN(?:ING)?|ERROR|FATAL)\]?[\s:]")
@@ -220,6 +223,10 @@ class Pipeline:
                 or bool(_LOG_LEVEL.match(body))
                 or (any(c.isdigit() for c in indent) and bool(_LOG_DASH.match(body)))
             )
+            # A timestamp that differs from the one above starts a new record
+            # even when the line carries no log level.
+            if pending and any(c.isdigit() for c in indent) and indent != pending[-1].indent:
+                record = True
             if record:
                 flush()
             current = _Pending(raw, plain, indent, body, trailing)
@@ -341,13 +348,23 @@ class Pipeline:
         room = max(self.width - len(indent), 20)
         out: list[str] = []
         current = ""
-        for char in text:
+        for index, char in enumerate(text):
             current += char
-            # Japanese has no spaces to break on, so lines end after a
-            # character that may not begin one.
-            if len(current) >= room and char in "、。」）":
-                out.append(indent + current)
-                current = ""
+            if len(current) < room:
+                continue
+            following = text[index + 1 : index + 2]
+            # Never cut inside an ASCII word (a restored identifier) and never
+            # start a line with a character that may not begin one.
+            inside_word = (
+                char.isascii()
+                and not char.isspace()
+                and following.isascii()
+                and not following.isspace()
+            )
+            if following and (inside_word or following in _NO_LINE_START):
+                continue
+            out.append(indent + current)
+            current = ""
         if current:
             out.append(indent + current)
         return out or [indent + text]

@@ -48,3 +48,7 @@ def test_line_containing_japanese_is_not_translatable(english, japanese):
 
 def test_shell_line_continuation_is_a_command():
     assert looks_like_command("aws ec2 describe-instances \\")
+
+
+def test_sentence_starting_with_a_manual_reference_is_prose():
+    assert not looks_like_command("tar(1) describes the supported archive formats.")

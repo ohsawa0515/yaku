@@ -258,3 +258,23 @@ def test_stack_frame_rule_matches_frames(passthrough):
     assert is_passthrough("    at com.example.Main.run(Main.java:12)", passthrough)
     assert is_passthrough('  File "/app/main.py", line 3, in <module>', passthrough)
     assert is_passthrough("    at /app/index.js:10:5", passthrough)
+
+
+def test_single_component_absolute_path_is_masked(mask_rules, japanese):
+    masker = Masker(rules=mask_rules, target=japanese)
+    masked, values = masker.mask("The files are stored in /tmp.")
+    assert values == ["/tmp"]
+    assert masked == "The files are stored in T1."
+
+
+def test_slash_inside_a_word_is_not_a_path(mask_rules, japanese):
+    masker = Masker(rules=mask_rules, target=japanese)
+    assert masker.mask("Use read/write access and/or I/O.")[1] == []
+
+
+def test_literal_placeholder_text_inside_enclosing_spans_is_protected(mask_rules, japanese):
+    masker = Masker(rules=mask_rules, target=japanese)
+    for text in ('say "T1 ready" now', "see /etc/T1/config now", 'say "hello  [world]  now" now'):
+        masked, values = masker.mask(text)
+        assert masked == text.replace(values[0], "T1")
+        assert masker.unmask(masked, values) == text

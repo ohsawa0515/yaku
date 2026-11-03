@@ -57,6 +57,7 @@ def load_mask_rules(dirs: Sequence[Path] | None = None) -> list[MaskRule]:
                 pattern=_compile(pattern, f"{path}:{name}"),
                 order=order,
                 enabled=entry.get("enabled", True),
+                encloses=entry.get("encloses", False),
             )
     rules = sorted(by_name.values(), key=lambda rule: rule.order)
     _reject_duplicate_orders(rules)

@@ -24,6 +24,9 @@ class MaskRule:
     pattern: re.Pattern[str]
     order: int
     enabled: bool = True
+    # A match that contains earlier placeholders is masked whole, with their
+    # original text, instead of being left partly exposed.
+    encloses: bool = False
 
 
 @dataclass(frozen=True)

@@ -220,3 +220,27 @@ def test_adjacent_placeholders_in_segments_stay_apart():
 
     assert _join_segments(["作成 T1", "T2 を削除"]) == "作成 T1 T2 を削除"
     assert _join_segments(["作成します。", "削除します。"]) == "作成します。削除します。"
+
+
+def test_changing_timestamps_start_new_records(make):
+    raw = [
+        "13:17:22 Waiting for the database to accept connections",
+        "13:17:23 Connection was refused by the server",
+    ]
+    lines = make(join=True).prepare(raw)
+    assert len(bodies(lines)) == 2
+
+
+def test_width_breaks_text_without_punctuation(make):
+    pipeline = make()
+    pipeline.width = 20
+    out = pipeline._wrap("あ" * 80 + "。", "")
+    assert max(len(line) for line in out) <= 21
+    assert all(not line.startswith("。") for line in out)
+
+
+def test_width_does_not_cut_inside_an_identifier(make):
+    pipeline = make()
+    pipeline.width = 20
+    out = pipeline._wrap("作成: " + "a" * 30 + " を確認", "")
+    assert any("a" * 30 in line for line in out)

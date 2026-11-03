@@ -10,6 +10,7 @@ from __future__ import annotations
 import re
 from collections import Counter
 from dataclasses import dataclass, field
+from functools import partial
 
 from yaku.types import MaskRule, TargetProfile
 
@@ -47,12 +48,15 @@ class Masker:
             values.append(m.group(0))
             return self.target.placeholder(len(values))
 
-        def replace(m: re.Match[str]) -> str:
+        def replace(m: re.Match[str], encloses: bool) -> str:
             span = m.group(0)
             # A span holding a placeholder was produced by an earlier rule.
-            # Masking it again would bury one number inside another.
+            # Masking it again would bury one number inside another, so only
+            # rules that enclose their contents take it over, as original text.
             if self.target.placeholder_pattern.search(span):
-                return span
+                if not encloses:
+                    return span
+                span = self.unmask(span, values)
             # A placeholder glued to a letter or digit ("T1hostname") is
             # indistinguishable from one the decoder damaged, so the loss
             # check could not be trusted. Leave such spans in place.
@@ -69,8 +73,18 @@ class Masker:
 
         masked = self.target.placeholder_pattern.sub(keep_literal, text)
         for rule in self._active:
-            masked = rule.pattern.sub(replace, masked)
-        return masked, values
+            masked = rule.pattern.sub(partial(replace, encloses=rule.encloses), masked)
+        return self._compact(masked, values)
+
+    def _compact(self, masked: str, values: list[str]) -> tuple[str, list[str]]:
+        """Renumber placeholders in order of appearance, dropping absorbed ones."""
+        kept: list[str] = []
+
+        def renumber(m: re.Match[str]) -> str:
+            kept.append(values[int(m.group(1)) - 1])
+            return self.target.placeholder(len(kept))
+
+        return self.target.placeholder_pattern.sub(renumber, masked), kept
 
     def unmask(self, text: str, values: list[str]) -> str:
         """Put the values back in a single pass.
@@ -93,8 +107,8 @@ class Masker:
         decoder that emits "T1stdout" has kept the characters and lost the
         value, so only a whole-token match counts as restored.
         """
-        intact = {n for n in self.target.placeholder_pattern.findall(text)}
-        return sum(1 for i in range(1, count + 1) if str(i) not in intact)
+        intact = {int(n) for n in self.target.placeholder_pattern.findall(text)}
+        return sum(1 for i in range(1, count + 1) if i not in intact)
 
     def residue(self, text: str, count: int) -> int:
         """Placeholder-like text that cannot be restored.
@@ -102,15 +116,15 @@ class Masker:
         Counts numbers that were never issued, repeats of one that was, and
         damaged forms such as a lower-cased or word-fused placeholder.
         """
-        intact = Counter(self.target.placeholder_pattern.findall(text))
+        intact = Counter(int(n) for n in self.target.placeholder_pattern.findall(text))
         if count == 0:
             # Nothing was issued, so any standalone placeholder is invented.
             # The loose form is not used: it matches inside ordinary words.
             return sum(intact.values())
-        every = Counter(self.target.placeholder_loose.findall(text))
+        every = Counter(int(n) for n in self.target.placeholder_loose.findall(text))
         extra = 0
         for number, times in every.items():
-            if not 1 <= int(number) <= count:
+            if not 1 <= number <= count:
                 extra += times
             else:
                 extra += times - min(intact[number], 1)

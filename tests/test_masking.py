@@ -193,3 +193,29 @@ def test_restored_values_are_not_rewritten(masker):
     assert (
         masker.unmask("Read T1 and T2.", values) == "Read /etc/first.conf and /etc/T1config.conf."
     )
+
+
+def test_enclosing_rule_takes_over_masked_spans(japanese):
+    rules = [
+        rule("BRACKET", r"\[[^\[\]\n]{4,300}\]", 10),
+        rule("QUOTED", r"[\"'`][^\"'`\n]{1,60}[\"'`]", 20),
+    ]
+    rules[1] = MaskRule(name="QUOTED", pattern=rules[1].pattern, order=20, encloses=True)
+    masker = Masker(rules=rules, target=japanese)
+    masked, values = masker.mask('say "hello  [world]  now" twice')
+    assert masked == "say T1 twice"
+    assert values == ['"hello  [world]  now"']
+
+
+def test_zero_padded_placeholder_format_is_validated(japanese):
+    import dataclasses
+
+    padded = dataclasses.replace(
+        japanese,
+        placeholder_fmt="X%02d",
+        placeholder_pattern=re.compile(r"(?<![A-Za-z0-9])X(\d{2})(?![A-Za-z0-9])"),
+        placeholder_loose=re.compile(r"(?i)X(\d{2})"),
+    )
+    masker = Masker(rules=[], target=padded)
+    assert masker.lost("X01 を作成", 1) == 0
+    assert masker.residue("X01 を作成", 1) == 0

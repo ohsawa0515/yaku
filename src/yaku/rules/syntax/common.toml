@@ -32,6 +32,7 @@ pattern = '"[^"\n]{1,60}"(?:\."[^"\n]{1,60}")+'
 [[rule]]
 name    = "QUOTED"
 order   = 15
+encloses = true
 pattern = '''(?<![\w\[])(["'`])(?:(?!\1)[^\n]){1,60}\1(?!\w)'''
 
 # Paths are taken before the dotted-name rules (TFADDR, RESOURCE): a path
@@ -40,11 +41,13 @@ pattern = '''(?<![\w\[])(["'`])(?:(?!\1)[^\n]){1,60}\1(?!\w)'''
 [[rule]]
 name    = "ABSPATH"
 order   = 32
-pattern = '(?:/[\w.\-]+){2,}/?'
+encloses = true
+pattern = '(?:/[\w.\-]+)+/?'
 
 [[rule]]
 name    = "RELPATH"
 order   = 34
+encloses = true
 pattern = '(?:\./)?(?:[\w.\-]+/)+[\w.\-]+\.\w{1,6}\b'
 
 # The target of a failed system call, as Go and many tools print it:
