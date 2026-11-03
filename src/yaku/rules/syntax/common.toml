@@ -1,0 +1,171 @@
+# Tool-independent shell and configuration syntax.
+# The order value decides evaluation order across every file that is loaded.
+
+[[rule]]
+name    = "BRACKET"
+order   = 10
+pattern = '\[[^\[\]\n]{4,300}\]'
+
+[[rule]]
+name    = "URL"
+order   = 20
+pattern = '''https?://[^\s\)\]"'>]+'''
+
+[[rule]]
+name    = "ARN"
+order   = 30
+pattern = 'arn:aws:[\w:/\-]+'
+
+[[rule]]
+name    = "UUID"
+order   = 40
+pattern = '\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b'
+
+[[rule]]
+name    = "DOTQUOTED"
+order   = 12
+pattern = '"[^"\n]{1,60}"(?:\."[^"\n]{1,60}")+'
+
+# A quoted span is taken whole, before the tokens inside it (URLs, paths,
+# flags). The delimiters must match, an apostrophe inside a word does not open
+# a span, and an index such as ["key"] belongs to its address (TFADDR).
+[[rule]]
+name    = "QUOTED"
+order   = 15
+encloses = true
+pattern = '''(?<![\w\[])(["'`])(?:(?!\1)[^\n])+\1(?!\w)'''
+
+# Paths are taken before the dotted-name rules (TFADDR, RESOURCE): a path
+# component such as ssh_config.d or data.json would otherwise be masked on
+# its own and split the path into pieces.
+[[rule]]
+name    = "ABSPATH"
+order   = 32
+encloses = true
+pattern = '(?:/[\w.\-]+)+/?'
+
+[[rule]]
+name    = "RELPATH"
+order   = 34
+encloses = true
+pattern = '(?:\./)?(?:[\w.\-]+/)+[\w.\-]+\.\w{1,6}\b'
+
+# The target of a failed system call, as Go and many tools print it:
+# "mkdir locked/sub: permission denied". A relative directory has no
+# extension, so the path rules above do not see it, and the decoder rewrites
+# it ("locked" came back as "lock"). Only a name containing a slash, right
+# before the colon that ends the call, is taken; the verb goes with it.
+[[rule]]
+name    = "SYSCALL"
+order   = 36
+pattern = '\b(?:mkdir|open|stat|lstat|chdir|rmdir|unlink|chmod|chown|readlink|rename|symlink|remove)\s+[^\s:]*/[^\s:]*(?=:)'
+
+[[rule]]
+name    = "FILE"
+order   = 100
+pattern = '\b[\w\-]+\.(?:tf|tfvars|tfstate|yml|yaml|json|toml|ini|go|py|rb|rs|ts|js|conf|cfg|log|sh|sql|md)\b'
+
+[[rule]]
+name    = "HOSTPORT"
+order   = 110
+pattern = '\b\d{1,3}(?:\.\d{1,3}){3}(?::\d+)?\b'
+
+[[rule]]
+name    = "HOST"
+order   = 120
+pattern = '\b(?:[a-z0-9](?:[a-z0-9\-]*[a-z0-9])?\.)+(?:com|org|net|io|dev|jp|cloud|local|internal)\b'
+
+[[rule]]
+name    = "FLAG"
+order   = 130
+pattern = '(?<![\w\-])--?[a-zA-Z][\w\-]*'
+
+# Commit ids up to 40 digits and sha256 digests of 64. A hex run surrounded
+# by hyphens is one segment of a longer name, such as a
+# pod suffix. Taking it on its own leaves the rest of the name exposed, and
+# the later identifier rule can no longer match across the placeholder.
+[[rule]]
+name    = "HASH"
+order   = 140
+pattern = '(?<![\w\-])(?:[0-9a-f]{64}|[0-9a-f]{7,40})(?![\w\-])'
+
+[[rule]]
+name    = "ENVVAR"
+order   = 150
+pattern = '\b[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+\b'
+
+[[rule]]
+name    = "CONST"
+order   = 160
+pattern = '''(?<![\w"'])[A-Z]{3,}(?![\w])'''
+
+[[rule]]
+name    = "CFGKEY"
+order   = 190
+pattern = '\b[a-z][a-z0-9]{2,}:!?[a-z][\w\-]*(?:\s*=\s*\w+)?'
+
+[[rule]]
+name    = "IDENT"
+order   = 200
+pattern = '\b[a-z0-9]+(?:-[a-z0-9]+){2,}\b'
+
+[[rule]]
+name    = "COMPARE"
+order   = 210
+pattern = '[<>]=?\s?\w+'
+
+# Masking version numbers damages constraint syntax such as foo>=1.2.0, and
+# the decoder reproduces bare digits correctly without help.
+[[rule]]
+name    = "VERSION"
+order   = 220
+enabled = false
+pattern = '\bv?\d+\.\d+(?:\.\d+)?(?:[\-+][\w\.]+)?\b'
+
+[[passthrough]]
+name    = "blank-line"
+pattern = '^\s*$'
+
+[[passthrough]]
+name    = "symbols-only"
+pattern = '^[\s\W_]*$'
+
+[[passthrough]]
+name    = "bare-bracket"
+pattern = '^\s*[\[\{\}\]]\s*,?\s*$'
+
+[[passthrough]]
+name    = "key-value"
+pattern = '^\s*[\w\.\-]+\s*=\s*'
+
+[[passthrough]]
+name    = "json-key"
+pattern = '^\s*"[\w\.\-]+"\s*:\s*'
+
+# A line drawn with box characters: tree output, table borders, and the
+# frames around values inside a terraform diagnostic.
+[[passthrough]]
+name    = "box-drawing"
+pattern = '^\s*[│┃├┤└┘┌┐─┬┴┼╵╷╭╮╯╰]'
+
+# Debug and trace records from a logging library: machine detail, not prose.
+# "- MainThread - botocore.hooks - DEBUG - ..." after its timestamp, or a
+# bare "DEBUG - ..." when the timestamp was cut off.
+[[passthrough]]
+name    = "debug-record"
+pattern = '^\s*(?:-\s+\S+\s+-\s+[\w.]+\s+-\s+|(?:\.\.\.\s*)?)(?:DEBUG|TRACE)\s+-\s'
+
+# A JSON object on one line, possibly as a Python bytes literal.
+[[passthrough]]
+name    = "json-object"
+pattern = '''^\s*b?['"]?\{\s*"[^"]+"\s*:'''
+
+# An HTTP header in canonical form, as signing debug output prints it:
+# "content-type:application/json", "x-amz-date:20240611T005703Z".
+[[passthrough]]
+name    = "canonical-header"
+pattern = '^\s*[a-z][a-z0-9\-]*:\S+\s*$'
+
+[[passthrough]]
+name    = "stack-frame"
+pattern = '''^\s*(?:at\s+\S+(?:\s*\([^)]*\)|:\d+(?::\d+)?)|from\s+\S+:\d+|File\s+"[^"]+",\s+line\s+\d+)'''

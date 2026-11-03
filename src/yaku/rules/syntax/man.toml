@@ -1,0 +1,4 @@
+[[rule]]
+name    = "MANREF"
+order   = 170
+pattern = '\b[\w\-]+\(\d\w?\)'
