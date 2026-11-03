@@ -235,3 +235,12 @@ def test_overstrike_ignores_escape_sequences_when_counting_columns():
     out = strip_overstrike("\x1b[31m_\x1b[0m\bX")
     assert strip_ansi(out) == "X"
     assert out == "\x1b[31mX\x1b[0m"
+
+
+def test_overstrike_keeps_combining_marks_after_wide_glyphs():
+    from yaku.text import strip_overstrike
+
+    kana = "が"
+    assert strip_overstrike(kana + "\nN\bN") == kana + "\nN"
+    assert strip_overstrike(kana + "\bX") == " X"
+    assert strip_overstrike("x́\bx") == "x"

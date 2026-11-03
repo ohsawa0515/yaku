@@ -37,6 +37,8 @@ def _display_width(ch: str) -> int:
 
 
 def _resolve_line(line: str) -> str:
+    if "\x08" not in line:
+        return line
     # One entry per display column. None marks the second column of a wide
     # glyph. Escape sequences take no column, so they are kept beside the
     # column they were written at and survive an overwrite.
@@ -57,8 +59,11 @@ def _resolve_line(line: str) -> str:
             continue
         width = _display_width(ch)
         if width == 0:
-            if 0 < col <= len(cells) and cells[col - 1] is not None:
-                cells[col - 1] += ch  # type: ignore[operator]
+            base = min(col, len(cells)) - 1
+            while base > 0 and cells[base] is None:
+                base -= 1
+            if base >= 0 and cells[base] is not None:
+                cells[base] += ch  # type: ignore[operator]
             continue
         cells.extend(" " for _ in range(col + width - len(cells)))
         for c in range(col, col + width):
