@@ -33,7 +33,7 @@ sentencepiece has no prebuilt wheel for Python 3.15 yet. If you install with Pyt
 
 ```console
 terraform plan 2>&1 | yaku
-man tar | col -bx | yaku
+man tar | yaku
 kubectl describe pod web | yaku
 pbpaste | yaku
 ```
