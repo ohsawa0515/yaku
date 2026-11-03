@@ -19,6 +19,8 @@ yaku setup --lang ja
 
 `yaku setup` の実行には uv が必要です。uv を `PATH` 上に入れてから実行してください。
 
+対応する Python は 3.12 から 3.14 です。sentencepiece が Python 3.15 向けのビルド済み wheel をまだ公開していないため、標準の Python が 3.15 の場合は `pipx install yaku --python python3.14` のように古いバージョンを明示してください。
+
 ## 使い方
 
 ```console
